@@ -19,9 +19,6 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
-local tailwind_lsp_util = require("utils.tailwind_lsp")
-
-vim.api.nvim_create_autocmd({ "BufEnter", "InsertEnter" }, {
-  pattern = "*.tsx",
-  callback = tailwind_lsp_util.restart,
+vim.lsp.enable({
+  "tailwindcss",
 })
