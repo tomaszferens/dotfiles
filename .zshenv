@@ -7,8 +7,7 @@ export XDG_STATE_HOME="$HOME/.local/state"
 # Man pages
 export MANPAGER='nvim +Man!'
 
-# Set up neovim as the default editor.
-export EDITOR="$(which nvim)"
+export EDITOR="nvim"
 export VISUAL="$EDITOR"
 
 # Disable Apple's save/restore mechanism.
