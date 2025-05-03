@@ -57,6 +57,28 @@ return {
           hidden = true,
           ignored = true,
           actions = {
+            copy_name = function(picker)
+              local selected = picker:current()
+              local file_name = vim.fn.fnamemodify(selected.file, ":t")
+
+              if selected.type == "file" then
+                vim.fn.setreg("+", file_name)
+                return
+              end
+
+              -- For directories, add trailing slash
+              vim.fn.setreg("+", file_name)
+            end,
+            copy_rel_cwd = function(picker)
+              local selected = picker:current()
+
+              if selected.type == "file" then
+                vim.fn.setreg("+", get_sub_path(selected.file))
+                return
+              end
+
+              vim.fn.setreg("+", get_sub_path(selected.file .. "/"))
+            end,
             grep_in_directory = function(picker)
               local selected = picker:current()
 
@@ -88,11 +110,13 @@ return {
         list = {
           keys = {
             ["<C-n>"] = false,
+            ["<C-y>"] = { "copy_name" },
             ["w"] = { "grep_in_directory" },
             ["f"] = { "find_in_directory" },
             ["<leader>ad"] = { "code_companion_add" },
             ["O"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
             ["T"] = { { "tab" }, mode = { "n", "i" } },
+            ["Y"] = { "copy_rel_cwd" },
           },
         },
         input = {
