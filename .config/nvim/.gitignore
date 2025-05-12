@@ -6,3 +6,4 @@ debug
 foo.*
 *.log
 data
+lua/utils/code_companion/projects

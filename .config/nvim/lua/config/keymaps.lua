@@ -49,15 +49,33 @@ map("v", "<leader>ae", function()
   end)
 end, { noremap = true, silent = true, desc = "Edit" })
 map({ "n" }, "<leader>ab", function()
+  local relative_buffer_path = vim.fn.expand("%:.")
   vim.cmd("CodeCompanionChat")
   vim.cmd("startinsert")
-  vim.api.nvim_feedkeys("#buffer ", "n", true)
+  vim.api.nvim_feedkeys(
+    "I'm currently looking at this #buffer " .. "(" .. relative_buffer_path .. ")" .. ".\n\n",
+    "n",
+    true
+  )
 end, { noremap = true, silent = true, desc = "Chat with buffer" })
 map({ "n" }, "<leader>ae", function()
   vim.cmd("CodeCompanionChat")
   vim.cmd("startinsert")
   vim.api.nvim_feedkeys("#buffer @editor ", "n", true)
 end, { noremap = true, silent = true, desc = "Edit buffer" })
+map({ "n" }, "<leader>af", function()
+  local relative_buffer_path = vim.fn.expand("%:.")
+  vim.cmd("CodeCompanionChat")
+  vim.cmd("startinsert")
+  vim.api.nvim_feedkeys(
+    "You're a @full_stack_dev with access to MCP (@mcp) servers.\n\nI'm currently looking at this #buffer "
+      .. "("
+      .. relative_buffer_path
+      .. ").\n\nPlease help me with the following:\n\n",
+    "n",
+    true
+  )
+end, { noremap = true, silent = true, desc = "Chat with buffer" })
 
 map("n", "<C-a>", "ggVG", { desc = "Select all text (normal mode)" })
 map("i", "<C-a>", "<Esc>ggVG", { desc = "Select all text (insert mode)" })

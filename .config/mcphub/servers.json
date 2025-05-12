@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "github.com/GLips/Figma-Context-MCP": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "figma-developer-mcp",
+        "--figma-api-key=${FIGMA_API_KEY}",
+        "--stdio"
+      ]
+    }
+  },
+  "nativeMCPServers": {
+    "neovim": {
+      "disabled": false
+    }
+  }
+}
