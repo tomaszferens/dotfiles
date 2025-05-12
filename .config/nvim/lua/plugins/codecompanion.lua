@@ -3,6 +3,7 @@ return {
   dependencies = {
     "nvim-lua/plenary.nvim",
     { "MeanderingProgrammer/render-markdown.nvim", ft = { "markdown", "codecompanion" } },
+    "ravitemer/codecompanion-history.nvim",
   },
   event = "VeryLazy",
   opts = {
@@ -16,6 +17,29 @@ return {
           show_result_in_chat = true, -- Show mcp tool results in chat
           make_vars = true, -- Convert resources to #variables
           make_slash_commands = true, -- Add prompts as /slash commands
+        },
+      },
+      history = {
+        enabled = true,
+        opts = {
+          -- Keymap to open history from chat buffer (default: gh)
+          keymap = "gh",
+          -- Automatically generate titles for new chats
+          auto_generate_title = true,
+          ---On exiting and entering neovim, loads the last chat on opening chat
+          continue_last_chat = false,
+          ---When chat is cleared with `gx` delete the chat from history
+          delete_on_clearing_chat = false,
+          -- Picker interface ("telescope" or "snacks" or "default")
+          picker = "snacks",
+          ---Enable detailed logging for history extension
+          enable_logging = false,
+          ---Directory path to save the chats
+          dir_to_save = vim.fn.stdpath("data") .. "/codecompanion-history",
+          -- Save all chats by default
+          auto_save = true,
+          -- Keymap to save the current chat manually
+          save_chat_keymap = "sc",
         },
       },
     },
