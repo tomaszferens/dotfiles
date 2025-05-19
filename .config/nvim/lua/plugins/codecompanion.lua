@@ -113,4 +113,9 @@ return {
       },
     },
   },
+  config = function(_, opts)
+    require("codecompanion").setup(opts)
+    require("utils.code_companion.extmarks").setup()
+    require("utils.code_companion.progress")
+  end,
 }
