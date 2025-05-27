@@ -19,6 +19,12 @@ return {
           padding = 0,
           margin = { horizontal = 0, vertical = 0 },
         },
+        hide = {
+          only_win = true,
+        },
+        ignore = {
+          filetypes = { "DiffviewFiles", "DiffviewFileHistory" },
+        },
         render = function(props)
           local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(props.buf), ":t")
           if filename == "" then
