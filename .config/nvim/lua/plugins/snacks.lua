@@ -19,7 +19,13 @@ local function start_picker(picker_name, opts)
 
   opts = vim.tbl_deep_extend("force", defaults, opts or {})
 
-  return Snacks.picker.pick(picker_name, opts)
+  local picker = Snacks.picker.pick(picker_name, opts)
+
+  if picker then
+    picker.list.win:on("VimResized", function()
+      picker:action("calculate_file_truncate_width")
+    end)
+  end
 end
 
 ---@param dir_item snacks.picker.Item
@@ -48,11 +54,31 @@ local function find_file_in_directory(dir_item)
   start_picker("files", options)
 end
 
+local function calculate_file_truncate_width(self)
+  local width = self.list.win:size().width
+  self.opts.formatters.file.truncate = width - 6
+end
+
 return {
   "folke/snacks.nvim",
   opts = {
     picker = {
+      -- formatters = {
+      --   file = {
+      --     truncate = 80,
+      --   },
+      -- },
       sources = {
+        live_grap = {
+          actions = {
+            calculate_file_truncate_width = calculate_file_truncate_width,
+          },
+        },
+        files = {
+          actions = {
+            calculate_file_truncate_width = calculate_file_truncate_width,
+          },
+        },
         explorer = {
           hidden = true,
           ignored = true,
@@ -108,6 +134,9 @@ return {
       },
       win = {
         list = {
+          on_buf = function(self)
+            self:execute("calculate_file_truncate_width")
+          end,
           keys = {
             ["<C-n>"] = false,
             ["<C-y>"] = { "copy_name" },
