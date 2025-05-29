@@ -23,7 +23,27 @@ return {
           only_win = true,
         },
         ignore = {
-          filetypes = { "DiffviewFiles", "DiffviewFileHistory" },
+          wintypes = function(winid)
+            -- 1. Find the tabpage this window belongs to
+            local tab = vim.api.nvim_win_get_tabpage(winid)
+            local wintype = vim.fn.win_gettype(winid)
+
+            -- 2. Iterate every window in that tab
+            for _, w in ipairs(vim.api.nvim_tabpage_list_wins(tab)) do
+              local b = vim.api.nvim_win_get_buf(w)
+              local name = vim.api.nvim_buf_get_name(b)
+              -- 3. If any buffer-name starts with "diffview://", ignore
+              if name:match("^diffview://") then
+                return true
+              end
+            end
+
+            if wintype ~= "" then
+              return true
+            end
+
+            return false
+          end,
         },
         render = function(props)
           local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(props.buf), ":t")
