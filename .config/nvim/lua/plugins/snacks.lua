@@ -63,13 +63,8 @@ return {
   "folke/snacks.nvim",
   opts = {
     picker = {
-      -- formatters = {
-      --   file = {
-      --     truncate = 80,
-      --   },
-      -- },
       sources = {
-        live_grap = {
+        live_grep = {
           actions = {
             calculate_file_truncate_width = calculate_file_truncate_width,
           },
