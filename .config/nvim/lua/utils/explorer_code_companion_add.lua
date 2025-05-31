@@ -1,22 +1,10 @@
 local fmt = string.format
 local path = require("plenary.path")
 
----@param picker snacks.Picker
-local function explorer_code_compaion_add(picker)
-  local node_or_err = picker:current()
+local M = {}
 
-  local node = node_or_err
-
-  if not node then
-    vim.notify("No node found under cursor", vim.log.levels.WARN)
-    return
-  end
-
-  if not node.file then
-    vim.notify("No valid file or directory selected in explorer", vim.log.levels.WARN)
-    return
-  end
-
+---@param picker snacks.picker.explorer.Node
+function M.code_companion_add(node)
   local codecompanion = require("codecompanion")
 
   local chat = codecompanion.last_chat()
@@ -108,4 +96,23 @@ local function explorer_code_compaion_add(picker)
   end
 end
 
-return explorer_code_compaion_add
+---@param picker snacks.Picker
+function M.explorer_code_compaion_add(picker)
+  local node_or_err = picker:current()
+
+  local node = node_or_err
+
+  if not node then
+    vim.notify("No node found under cursor", vim.log.levels.WARN)
+    return
+  end
+
+  if not node.file then
+    vim.notify("No valid file or directory selected in explorer", vim.log.levels.WARN)
+    return
+  end
+
+  M.code_companion_add(node)
+end
+
+return M

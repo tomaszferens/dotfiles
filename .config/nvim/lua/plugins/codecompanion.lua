@@ -67,6 +67,9 @@ return {
             extended_thinking = {
               default = false,
             },
+            max_tokens = {
+              default = 64000,
+            },
           },
         })
       end,
@@ -111,6 +114,7 @@ return {
     },
   },
   config = function(_, opts)
+    vim.g.codecompanion_auto_tool_mode = true
     require("codecompanion").setup(opts)
     require("utils.code_companion.extmarks").setup()
     require("utils.code_companion.progress")

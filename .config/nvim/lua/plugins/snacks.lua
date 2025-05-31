@@ -1,6 +1,12 @@
 local function get_sub_path(p)
   local cwd = vim.fn.getcwd()
   local file_path = p
+
+  -- Only process if the path contains the cwd
+  if not file_path:find(cwd, 1, true) then
+    return file_path
+  end
+
   local rest_path = file_path:sub(#cwd + 2) -- +2 to skip the trailing slash
   return rest_path
 end
@@ -59,20 +65,46 @@ local function calculate_file_truncate_width(self)
   self.opts.formatters.file.truncate = width - 6
 end
 
+---@param picker snacks.Picker
+local function copy_results_to_clipboard(picker)
+  local seen_files = {}
+  local file_paths = {}
+
+  for i, item in ipairs(picker:items()) do
+    if not seen_files[item.file] then
+      seen_files[item.file] = true
+      local content = "- `" .. get_sub_path(item.file) .. "`"
+      table.insert(file_paths, content)
+    end
+  end
+
+  local clipboard_content = table.concat(file_paths, "\n")
+  vim.fn.setreg("+", clipboard_content)
+  picker:close()
+  vim.notify("Copied " .. #file_paths .. " file(s) to clipboard", vim.log.levels.INFO, { title = "Snacks" })
+end
+
+local picker_actions = {
+  calculate_file_truncate_width = calculate_file_truncate_width,
+  copy_results_to_clipboard = copy_results_to_clipboard,
+}
+
 return {
   "folke/snacks.nvim",
   opts = {
     picker = {
       sources = {
+        lsp_references = {
+          actions = picker_actions,
+        },
+        grep = {
+          actions = picker_actions,
+        },
         live_grep = {
-          actions = {
-            calculate_file_truncate_width = calculate_file_truncate_width,
-          },
+          actions = picker_actions,
         },
         files = {
-          actions = {
-            calculate_file_truncate_width = calculate_file_truncate_width,
-          },
+          actions = picker_actions,
         },
         explorer = {
           hidden = true,
@@ -120,9 +152,9 @@ return {
 
               find_file_in_directory(selected)
             end,
-            code_companion_add = function(picker)
-              local explorer_code_companion_add = require("utils.explorer_code_companion_add")
-              explorer_code_companion_add(picker)
+            code_companion_add_explorer = function(picker)
+              local ccMod = require("utils.explorer_code_companion_add")
+              ccMod.explorer_code_compaion_add(picker)
             end,
           },
         },
@@ -137,15 +169,17 @@ return {
             ["<C-y>"] = { "copy_name" },
             ["w"] = { "grep_in_directory" },
             ["f"] = { "find_in_directory" },
-            ["<leader>ad"] = { "code_companion_add" },
+            ["<leader>ad"] = { "code_companion_add_explorer" },
             ["O"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
             ["T"] = { { "tab" }, mode = { "n", "i" } },
             ["Y"] = { "copy_rel_cwd" },
+            ["<M-a>"] = { "copy_results_to_clipboard" },
           },
         },
         input = {
           keys = {
             ["<C-Tab>"] = { { "tab" }, mode = { "n", "i" } },
+            ["<M-a>"] = { { "copy_results_to_clipboard" }, mode = { "n", "i" } },
           },
         },
       },
