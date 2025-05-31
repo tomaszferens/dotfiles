@@ -70,7 +70,12 @@ local function copy_results_to_clipboard(picker)
   local seen_files = {}
   local file_paths = {}
 
-  for i, item in ipairs(picker:items()) do
+  local selected_items = picker:selected()
+  local all_items = picker:items()
+
+  local items = #selected_items > 0 and selected_items or all_items
+
+  for i, item in ipairs(items) do
     if not seen_files[item.file] then
       seen_files[item.file] = true
       local content = "- `" .. get_sub_path(item.file) .. "`"
