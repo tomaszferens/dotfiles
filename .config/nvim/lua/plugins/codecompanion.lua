@@ -55,6 +55,16 @@ return {
       },
     },
     adapters = {
+      copilot = function()
+        return require("codecompanion.adapters").extend("copilot", {
+          name = "llama3", -- Give this adapter a different name to differentiate it from the default ollama adapter
+          schema = {
+            model = {
+              default = "claude-3.7-sonnet",
+            },
+          },
+        })
+      end,
       anthropic = function()
         return require("codecompanion.adapters").extend("anthropic", {
           env = {
@@ -63,9 +73,6 @@ return {
           schema = {
             model = {
               default = "claude-sonnet-4-20250514",
-            },
-            extended_thinking = {
-              default = false,
             },
             max_tokens = {
               default = 64000,
@@ -76,7 +83,7 @@ return {
     },
     strategies = {
       chat = {
-        adapter = "anthropic",
+        adapter = "copilot",
         roles = {
           llm = function(adapter)
             return "CodeCompanion (" .. adapter.formatted_name .. ")"
@@ -118,5 +125,68 @@ return {
     require("codecompanion").setup(opts)
     require("utils.code_companion.extmarks").setup()
     require("utils.code_companion.progress")
+
+    local map = LazyVim.safe_keymap_set
+
+    map("v", "<leader>ad", [[:'<,'>CodeCompanionChat Add<CR>]], { noremap = true, silent = true })
+    map(
+      { "n", "v" },
+      "<leader>ac",
+      "<cmd>CodeCompanionActions<cr>",
+      { noremap = true, silent = true, desc = "CodeCompanion actions" }
+    )
+    map(
+      { "n", "v" },
+      "<leader>aa",
+      "<cmd>CodeCompanionChat Toggle<cr>",
+      { noremap = true, silent = true, desc = "CodeCompanion chat" }
+    )
+    map("v", "<leader>ae", function()
+      vim.ui.input({
+        prompt = "Enter prompt: ",
+        relative = "cursor",
+        override = function(conf)
+          conf.anchor = "NW"
+          conf.row = 1
+          return conf
+        end,
+      }, function(prompt)
+        if not prompt or prompt == "" then
+          print("No prompt given. Aborting.")
+          return
+        end
+        vim.cmd(
+          "'<,'>CodeCompanion Please edit the selected code. Here is a full #buffer code for reference. " .. prompt
+        )
+      end)
+    end, { noremap = true, silent = true, desc = "Edit" })
+    map({ "n" }, "<leader>ab", function()
+      local relative_buffer_path = vim.fn.expand("%:.")
+      vim.cmd("CodeCompanionChat")
+      vim.cmd("startinsert")
+      vim.api.nvim_feedkeys(
+        " I'm currently looking at this #buffer " .. "(" .. relative_buffer_path .. ")" .. ".\n\n",
+        "n",
+        true
+      )
+    end, { noremap = true, silent = true, desc = "Chat with buffer" })
+    map({ "n" }, "<leader>ae", function()
+      vim.cmd("CodeCompanionChat")
+      vim.cmd("startinsert")
+      vim.api.nvim_feedkeys("#buffer @editor ", "n", true)
+    end, { noremap = true, silent = true, desc = "Edit buffer" })
+    map({ "n" }, "<leader>af", function()
+      local relative_buffer_path = vim.fn.expand("%:.")
+      vim.cmd("CodeCompanionChat")
+      vim.cmd("startinsert")
+      vim.api.nvim_feedkeys(
+        "You're a @full_stack_dev with access to MCP (@mcp) servers.\n\nI'm currently looking at this #buffer "
+          .. "("
+          .. relative_buffer_path
+          .. ").\n\nPlease help me with the following:\n\n",
+        "n",
+        true
+      )
+    end, { noremap = true, silent = true, desc = "Chat with buffer" })
   end,
 }

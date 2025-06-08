@@ -10,6 +10,7 @@ map("n", "<M-,>", "<c-w>5<")
 map("n", "<M-.>", "<c-w>5>")
 map("n", "<M-t>", "<C-W>+")
 map("n", "<M-s>", "<C-W>-")
+map("t", "<C-\\>", "<C-\\><C-n>")
 
 map(
   "n",
@@ -17,65 +18,6 @@ map(
   ":call setreg('+', expand('%:.') .. ':' .. line('.'))<CR>",
   { desc = "Copy file path to clipboard" }
 )
-
-map("v", "<leader>ad", [[:'<,'>CodeCompanionChat Add<CR>]], { noremap = true, silent = true })
-map(
-  { "n", "v" },
-  "<leader>ac",
-  "<cmd>CodeCompanionActions<cr>",
-  { noremap = true, silent = true, desc = "CodeCompanion actions" }
-)
-map(
-  { "n", "v" },
-  "<leader>aa",
-  "<cmd>CodeCompanionChat Toggle<cr>",
-  { noremap = true, silent = true, desc = "CodeCompanion chat" }
-)
-map("v", "<leader>ae", function()
-  vim.ui.input({
-    prompt = "Enter prompt: ",
-    relative = "cursor",
-    override = function(conf)
-      conf.anchor = "NW"
-      conf.row = 1
-      return conf
-    end,
-  }, function(prompt)
-    if not prompt or prompt == "" then
-      print("No prompt given. Aborting.")
-      return
-    end
-    vim.cmd("'<,'>CodeCompanion Please edit the selected code. Here is a full #buffer code for reference. " .. prompt)
-  end)
-end, { noremap = true, silent = true, desc = "Edit" })
-map({ "n" }, "<leader>ab", function()
-  local relative_buffer_path = vim.fn.expand("%:.")
-  vim.cmd("CodeCompanionChat")
-  vim.cmd("startinsert")
-  vim.api.nvim_feedkeys(
-    "I'm currently looking at this #buffer " .. "(" .. relative_buffer_path .. ")" .. ".\n\n",
-    "n",
-    true
-  )
-end, { noremap = true, silent = true, desc = "Chat with buffer" })
-map({ "n" }, "<leader>ae", function()
-  vim.cmd("CodeCompanionChat")
-  vim.cmd("startinsert")
-  vim.api.nvim_feedkeys("#buffer @editor ", "n", true)
-end, { noremap = true, silent = true, desc = "Edit buffer" })
-map({ "n" }, "<leader>af", function()
-  local relative_buffer_path = vim.fn.expand("%:.")
-  vim.cmd("CodeCompanionChat")
-  vim.cmd("startinsert")
-  vim.api.nvim_feedkeys(
-    "You're a @full_stack_dev with access to MCP (@mcp) servers.\n\nI'm currently looking at this #buffer "
-      .. "("
-      .. relative_buffer_path
-      .. ").\n\nPlease help me with the following:\n\n",
-    "n",
-    true
-  )
-end, { noremap = true, silent = true, desc = "Chat with buffer" })
 
 map("n", "<C-a>", "ggVG", { desc = "Select all text (normal mode)" })
 map("i", "<C-a>", "<Esc>ggVG", { desc = "Select all text (insert mode)" })
