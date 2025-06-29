@@ -156,7 +156,7 @@ return {
           return
         end
         vim.cmd(
-          "'<,'>CodeCompanion Please edit the selected code. Here is the full #buffer code for reference. " .. prompt
+          "'<,'>CodeCompanion Please edit the selected code. Here is the full #{buffer} code for reference. " .. prompt
         )
       end)
     end, { noremap = true, silent = true, desc = "Edit" })
@@ -165,7 +165,7 @@ return {
       vim.cmd("CodeCompanionChat")
       vim.cmd("startinsert")
       vim.api.nvim_feedkeys(
-        " I'm currently looking at this file: #buffer " .. "(" .. relative_buffer_path .. ")" .. ".\n\n",
+        " I'm currently looking at this file: #{buffer} " .. "(" .. relative_buffer_path .. ")" .. ".\n\n",
         "n",
         true
       )
@@ -175,7 +175,7 @@ return {
       vim.cmd("CodeCompanionChat")
       vim.cmd("startinsert")
       vim.api.nvim_feedkeys(
-        "You have the capability to @insert_edit_into_file\n\nI'm currently looking at this file: #buffer "
+        "You have the capability to @{insert_edit_into_file}\n\nI'm currently looking at this file: #{buffer} "
           .. "("
           .. relative_buffer_path
           .. ").\n\nHelp me with the following:\n\n",
@@ -188,7 +188,7 @@ return {
       vim.cmd("CodeCompanionChat")
       vim.cmd("startinsert")
       vim.api.nvim_feedkeys(
-        "You're a @full_stack_dev with access to MCP (@mcp) servers.\n\nI'm currently looking at this file: #buffer "
+        "You're a @{full_stack_dev} with access to MCP (@{mcp}) servers.\n\nI'm currently looking at this file: #{buffer} "
           .. "("
           .. relative_buffer_path
           .. ").\n\nPlease help me with the following:\n\n",
