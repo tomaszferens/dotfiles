@@ -78,7 +78,7 @@ local function copy_results_to_clipboard(picker)
   for i, item in ipairs(items) do
     if not seen_files[item.file] then
       seen_files[item.file] = true
-      local content = "- `" .. get_sub_path(item.file) .. "`"
+      local content = "@" .. get_sub_path(item.file)
       table.insert(file_paths, content)
     end
   end
