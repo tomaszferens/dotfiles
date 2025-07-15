@@ -135,6 +135,14 @@ config.keys = {
         mods = 'CTRL|ALT',
         action = act.AdjustPaneSize { 'Right', 5 },
     },
+    {
+        key = 'Enter',
+        mods = 'SHIFT',
+        action = wezterm.action.Multiple {
+            wezterm.action.SendString '\\',
+            wezterm.action.SendKey { key = 'Enter' },
+        },
+    },
 }
 -- I just need to toggle fullscreen on Mac. On Linux I use the window manager.
 if on_mac then

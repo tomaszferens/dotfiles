@@ -10,6 +10,7 @@ return {
     {
       "<leader>cca",
       function()
+        -- Check if we're in a snacks picker (this will be overridden by explorer keybinding when in explorer)
         local mode = vim.api.nvim_get_mode().mode
         if mode == "v" or mode == "V" or mode == "\22" then
           -- Visual mode (v, V, or ^V)

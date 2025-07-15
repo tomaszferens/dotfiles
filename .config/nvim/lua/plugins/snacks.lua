@@ -161,6 +161,12 @@ return {
               local ccMod = require("utils.explorer_code_companion_add")
               ccMod.explorer_code_compaion_add(picker)
             end,
+            claudecode_add_explorer = function(picker)
+              local selected = picker:current()
+              if selected and selected.file then
+                vim.cmd("ClaudeCodeAdd " .. selected.file)
+              end
+            end,
           },
         },
       },
@@ -175,6 +181,7 @@ return {
             ["w"] = { "grep_in_directory" },
             ["f"] = { "find_in_directory" },
             ["<leader>ad"] = { "code_companion_add_explorer" },
+            ["<leader>cca"] = { "claudecode_add_explorer" },
             ["O"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
             ["T"] = { { "tab" }, mode = { "n", "i" } },
             ["Y"] = { "copy_rel_cwd" },
