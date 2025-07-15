@@ -23,3 +23,8 @@ vim.api.nvim_set_hl(0, "DiffChange", { bg = "#2F4146" })
 vim.api.nvim_set_hl(0, "DiffText", { bg = "#463C2F" })
 
 vim.opt.relativenumber = false
+
+-- vim.api.nvim_set_hl(0, "SnacksPickerDir", { fg = "#939ec9" })
+-- vim.api.nvim_set_hl(0, "SnacksPickerPathHidden", { fg = "#939ec9" })
+-- vim.api.nvim_set_hl(0, "SnacksPickerPathIgnored", { link = "Comment" })
+-- vim.api.nvim_set_hl(0, "SnacksPickerGitStatusUntracked", { link = "Special" })
