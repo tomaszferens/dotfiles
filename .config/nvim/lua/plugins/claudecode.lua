@@ -4,7 +4,7 @@ return {
   event = "VeryLazy",
   keys = {
     { "<leader>cc", nil, desc = "AI/Claude Code" },
-    { "<leader>cct", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
+    { "<M-t>", "<cmd>ClaudeCode<cr>", mode = { "n", "i", "t" }, desc = "Toggle Claude" },
     { "<leader>ccr", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
     { "<leader>ccc", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
     {
@@ -82,9 +82,10 @@ return {
     {
       "<M-a>",
       function()
-        -- Find first real file buffer that exists on disk
-        for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-          if vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr) then
+        -- Find first real file buffer that exists on disk and is visible in a window
+        for _, winnr in ipairs(vim.api.nvim_list_wins()) do
+          local bufnr = vim.api.nvim_win_get_buf(winnr)
+          if vim.api.nvim_buf_is_valid(bufnr) then
             local buftype = vim.bo[bufnr].buftype
             local buf_name = vim.api.nvim_buf_get_name(bufnr)
 
