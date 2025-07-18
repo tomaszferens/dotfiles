@@ -191,6 +191,7 @@ return {
           end,
           keys = {
             ["<C-n>"] = false,
+            ["<M-f>"] = false,
             ["<C-y>"] = { "copy_name" },
             ["w"] = { "grep_in_directory" },
             ["f"] = { "find_in_directory" },
@@ -214,6 +215,7 @@ return {
   keys = {
     { "<leader>fF", false },
     { "<leader>ff", false },
+    { "<M-f>", false },
     { "<C-n>", "<leader>fE", desc = "Explorer Snacks (cwd)", remap = true },
     {
       "<leader>fw",

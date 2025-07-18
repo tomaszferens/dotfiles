@@ -4,7 +4,7 @@ return {
   event = "VeryLazy",
   keys = {
     { "<leader>cc", nil, desc = "AI/Claude Code" },
-    { "<M-t>", "<cmd>ClaudeCode<cr>", mode = { "n", "i", "t" }, desc = "Toggle Claude" },
+    { "<M-c>", "<cmd>ClaudeCode<cr>", mode = { "n", "i", "t" }, desc = "Toggle Claude" },
     { "<leader>ccr", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
     { "<leader>ccc", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
     {
@@ -36,7 +36,7 @@ return {
       desc = "New line in Claude Code",
     },
     {
-      "<M-c>",
+      "<M-f>",
       function()
         -- Find Claude Code terminal buffer
         local claude_bufnr = nil
@@ -96,7 +96,7 @@ return {
               and not buf_name:match("^term://")
               and vim.fn.filereadable(buf_name) == 1
             then
-              vim.cmd("ClaudeCodeAdd " .. buf_name)
+              vim.cmd("ClaudeCodeAdd " .. vim.fn.fnamemodify(buf_name, ":p"))
               return
             end
           end
