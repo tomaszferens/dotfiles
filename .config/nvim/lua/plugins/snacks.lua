@@ -89,9 +89,22 @@ local function copy_results_to_clipboard(picker)
   vim.notify("Copied " .. #file_paths .. " file(s) to clipboard", vim.log.levels.INFO, { title = "Snacks" })
 end
 
+---@param picker snacks.Picker
+local function smart_add_action(picker)
+  if picker.init_opts.source == "explorer" then
+    local selected = picker:current()
+    if selected and selected.file then
+      vim.cmd("ClaudeCodeAdd " .. selected.file)
+    end
+  else
+    copy_results_to_clipboard(picker)
+  end
+end
+
 local picker_actions = {
   calculate_file_truncate_width = calculate_file_truncate_width,
   copy_results_to_clipboard = copy_results_to_clipboard,
+  smart_add_action = smart_add_action,
 }
 
 return {
@@ -167,6 +180,7 @@ return {
                 vim.cmd("ClaudeCodeAdd " .. selected.file)
               end
             end,
+            smart_add_action = smart_add_action,
           },
         },
       },
@@ -181,17 +195,16 @@ return {
             ["w"] = { "grep_in_directory" },
             ["f"] = { "find_in_directory" },
             ["<leader>ad"] = { "code_companion_add_explorer" },
-            ["<leader>cca"] = { "claudecode_add_explorer" },
             ["O"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
             ["T"] = { { "tab" }, mode = { "n", "i" } },
             ["Y"] = { "copy_rel_cwd" },
-            ["<M-a>"] = { "copy_results_to_clipboard" },
+            ["<M-a>"] = { "smart_add_action" },
           },
         },
         input = {
           keys = {
             ["<C-Tab>"] = { { "tab" }, mode = { "n", "i" } },
-            ["<M-a>"] = { { "copy_results_to_clipboard" }, mode = { "n", "i" } },
+            ["<M-a>"] = { { "smart_add_action" }, mode = { "n", "i" } },
           },
         },
       },

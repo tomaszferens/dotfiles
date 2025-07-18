@@ -8,7 +8,7 @@ return {
     { "<leader>ccr", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
     { "<leader>ccc", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
     {
-      "<leader>cca",
+      "<M-a>",
       function()
         -- Check if we're in a snacks picker (this will be overridden by explorer keybinding when in explorer)
         local mode = vim.api.nvim_get_mode().mode

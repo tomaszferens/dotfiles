@@ -8,7 +8,7 @@ map("n", "<C-u>", "<C-u>zz", { desc = "Scroll and recenter" })
 
 map("n", "<M-,>", "<c-w>5<")
 map("n", "<M-.>", "<c-w>5>")
-map("n", "<M-t>", "<C-W>+")
+map("n", "<M-y>", "<C-W>+")
 map("n", "<M-s>", "<C-W>-")
 map("t", "<C-\\>", "<C-\\><C-n>")
 
