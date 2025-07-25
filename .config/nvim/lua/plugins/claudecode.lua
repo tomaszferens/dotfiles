@@ -1,3 +1,21 @@
+local function strip_cwd(p)
+  local cwd = vim.fn.getcwd()
+  local file_path = p
+
+  -- Only process if the path contains the cwd
+  if not file_path:find(cwd, 1, true) then
+    return file_path
+  end
+
+  local rest_path = file_path:sub(#cwd + 2) -- +2 to skip the trailing slash
+  return rest_path
+end
+
+local function add_to_claude(path)
+  local sub_path = strip_cwd(path)
+  vim.cmd({ cmd = "ClaudeCodeAdd", args = { sub_path } })
+end
+
 return {
   "coder/claudecode.nvim",
   config = true,
@@ -18,7 +36,7 @@ return {
         else
           -- Normal mode - add current file
           local current_file = vim.fn.expand("%:p")
-          vim.cmd("ClaudeCodeAdd " .. current_file)
+          add_to_claude(current_file)
         end
       end,
       mode = { "n", "v" },
@@ -96,7 +114,7 @@ return {
               and not buf_name:match("^term://")
               and vim.fn.filereadable(buf_name) == 1
             then
-              vim.cmd("ClaudeCodeAdd " .. vim.fn.fnamemodify(buf_name, ":p"))
+              add_to_claude(vim.fn.fnamemodify(buf_name, ":p"))
               return
             end
           end

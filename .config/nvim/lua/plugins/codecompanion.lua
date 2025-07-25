@@ -54,36 +54,12 @@ return {
         show_settings = true,
       },
     },
-    adapters = {
-      copilot = function()
-        return require("codecompanion.adapters").extend("copilot", {
-          name = "llama3", -- Give this adapter a different name to differentiate it from the default ollama adapter
-          schema = {
-            model = {
-              default = "claude-3.7-sonnet",
-            },
-          },
-        })
-      end,
-      anthropic = function()
-        return require("codecompanion.adapters").extend("anthropic", {
-          env = {
-            api_key = "ANTHROPIC_API_KEY",
-          },
-          schema = {
-            model = {
-              default = "claude-sonnet-4-20250514",
-            },
-            max_tokens = {
-              default = 64000,
-            },
-          },
-        })
-      end,
-    },
     strategies = {
       chat = {
-        adapter = "copilot",
+        adapter = {
+          name = "copilot",
+          model = "claude-sonnet-4",
+        },
         roles = {
           llm = function(adapter)
             return "CodeCompanion (" .. adapter.formatted_name .. ")"
@@ -116,7 +92,10 @@ return {
         },
       },
       inline = {
-        adapter = "anthropic",
+        adapter = {
+          name = "copilot",
+          model = "claude-sonnet-4",
+        },
       },
     },
   },
