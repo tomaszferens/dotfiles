@@ -123,8 +123,29 @@ return {
       mode = "t",
       desc = "Add file to Claude from terminal",
     },
+    {
+      "<M-v>",
+      function()
+        local reg_content = vim.fn.getreg("+")
+        local chunks = {}
+        local chunk_size = 1000 -- Adjust based on testing
+
+        for i = 1, #reg_content, chunk_size do
+          table.insert(chunks, reg_content:sub(i, i + chunk_size - 1))
+        end
+
+        local job_id = vim.b.terminal_job_id
+        for i, chunk in ipairs(chunks) do
+          vim.fn.chansend(job_id, chunk)
+          vim.wait(10) -- Small delay between chunks
+        end
+      end,
+      mode = "t",
+      desc = "Add file to Claude from terminal",
+    },
   },
   opts = {
+    terminal_cmd = "~/.config/claude/local/node_modules/.bin/claude",
     terminal = {
       split_width_percentage = 0.50,
     },
