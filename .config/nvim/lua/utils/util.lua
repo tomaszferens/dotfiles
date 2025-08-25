@@ -210,4 +210,67 @@ M.remove_parts = function(path_pattern, num_parts)
   return table.concat(parts, "/")
 end
 
+function M.find_terminal_buffer_by_names(candidate_names)
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].buftype == "terminal" then
+      local buf_name = vim.api.nvim_buf_get_name(bufnr)
+      for _, name in ipairs(candidate_names) do
+        if buf_name:match(name) then
+          return bufnr
+        end
+      end
+    end
+  end
+  return nil
+end
+
+function M.find_window_with_buffer(bufnr)
+  for _, winnr in ipairs(vim.api.nvim_list_wins()) do
+    if vim.api.nvim_win_get_buf(winnr) == bufnr then
+      return winnr
+    end
+  end
+  return nil
+end
+
+-- Check if a terminal buffer is visible in any window
+function M.is_terminal_visible(bufnr)
+  return M.find_window_with_buffer(bufnr) ~= nil
+end
+
+-- Generic function to focus or create a terminal
+-- terminal_configs: array of {names, create_command} tables
+-- Prioritizes visible terminals first, then searches by order
+function M.focus_or_create_terminal(terminal_configs)
+  -- First pass: check for visible terminals
+  for _, config in ipairs(terminal_configs) do
+    local bufnr = M.find_terminal_buffer_by_names(config.names)
+    if bufnr and M.is_terminal_visible(bufnr) then
+      local winnr = M.find_window_with_buffer(bufnr)
+      vim.api.nvim_set_current_win(winnr)
+      vim.cmd("startinsert")
+      return true
+    end
+  end
+  
+  -- Second pass: check for existing but not visible terminals
+  for _, config in ipairs(terminal_configs) do
+    local bufnr = M.find_terminal_buffer_by_names(config.names)
+    if bufnr then
+      -- Buffer exists but no window, open it
+      vim.cmd("buffer " .. bufnr)
+      vim.cmd("startinsert")
+      return true
+    end
+  end
+  
+  -- No existing terminals found, create the first one
+  if #terminal_configs > 0 then
+    terminal_configs[1].create_command()
+    return true
+  end
+  
+  return false
+end
+
 return M

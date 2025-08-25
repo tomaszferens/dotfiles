@@ -1,3 +1,5 @@
+local ai_utils = require("utils.claude")
+
 local function get_sub_path(p)
   local cwd = vim.fn.getcwd()
   local file_path = p
@@ -94,7 +96,7 @@ local function smart_add_action(picker)
   if picker.init_opts.source == "explorer" then
     local selected = picker:current()
     if selected and selected.file then
-      vim.cmd("ClaudeCodeAdd " .. selected.file)
+      ai_utils.add_file_to_ai_terminals(selected.file)
     end
   else
     copy_results_to_clipboard(picker)
@@ -174,10 +176,10 @@ return {
               local ccMod = require("utils.explorer_code_companion_add")
               ccMod.explorer_code_compaion_add(picker)
             end,
-            claudecode_add_explorer = function(picker)
+            ai_add_explorer = function(picker)
               local selected = picker:current()
               if selected and selected.file then
-                vim.cmd("ClaudeCodeAdd " .. selected.file)
+                ai_utils.add_file_to_ai_terminals(selected.file)
               end
             end,
             smart_add_action = smart_add_action,
