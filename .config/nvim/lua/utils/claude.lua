@@ -122,14 +122,14 @@ function M.add_file_to_ai_terminals(path)
 
   -- Check for Claude Code terminal
   local claude_bufnr = utils.find_terminal_buffer_by_names({ "claude", "ClaudeCode" })
-  if claude_bufnr then
+  if claude_bufnr and utils.is_terminal_visible(claude_bufnr) then
     M.add_to_claude(path)
     added_to_any = true
   end
 
   -- Check for OpenCode terminal
   local opencode_bufnr = utils.find_terminal_buffer_by_names({ "opencode" })
-  if opencode_bufnr then
+  if opencode_bufnr and utils.is_terminal_visible(opencode_bufnr) then
     M.add_to_opencode(path)
     added_to_any = true
   end
