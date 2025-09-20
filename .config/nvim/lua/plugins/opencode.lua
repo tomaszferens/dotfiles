@@ -65,6 +65,13 @@ return {
 
     vim.keymap.set("n", "<M-o>", function()
       require("opencode").toggle()
+      -- Focus the opencode terminal window if it exists
+      local utils = require("utils.util")
+      local bufnr = utils.find_terminal_buffer_by_names({ "opencode" })
+      local win = utils.find_window_with_buffer(bufnr)
+      if win then
+        vim.api.nvim_set_current_win(win)
+      end
     end, { desc = "Toggle embedded opencode" })
   end,
 }

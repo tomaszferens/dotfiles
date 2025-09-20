@@ -139,4 +139,24 @@ function M.add_file_to_ai_terminals(path)
   end
 end
 
+-- Function to detect which AI terminal is opened
+function M.get_active_ai_terminal()
+  local utils = require("utils.util")
+
+  -- Check for OpenCode terminal first
+  local opencode_bufnr = utils.find_terminal_buffer_by_names({ "opencode" })
+  if opencode_bufnr then
+    return "opencode"
+  end
+
+  -- Check for Claude Code terminal
+  local claude_bufnr = utils.find_terminal_buffer_by_names({ "claude", "ClaudeCode" })
+  if claude_bufnr then
+    return "claudecode"
+  end
+
+  -- Return nil if no AI terminal is found
+  return nil
+end
+
 return M

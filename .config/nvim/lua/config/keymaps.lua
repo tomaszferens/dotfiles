@@ -52,11 +52,12 @@ map({ "n", "v" }, "<M-a>", function()
 end, { desc = "Send to AI terminal (Claude/OpenCode)" })
 
 map("t", "<S-CR>", function()
-  vim.api.nvim_feedkeys("\\", "n", false)
-  vim.defer_fn(function()
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", false)
-  end, 5)
-end, { desc = "New line in Claude Code" })
+  local active_terminal = claude_utils.get_active_ai_terminal()
+
+  if active_terminal == "opencode" then
+    require("opencode").command("input_newline")
+  end
+end, { desc = "New line in AI terminal" })
 
 map({ "n", "i" }, "<M-f>", function()
   -- Define terminal configurations in priority order
