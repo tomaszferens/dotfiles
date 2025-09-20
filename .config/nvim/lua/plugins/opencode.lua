@@ -46,11 +46,11 @@ return {
       require("opencode").command("messages_copy")
     end, { desc = "Copy last opencode response" })
 
-    vim.keymap.set("n", "<S-C-u>", function()
+    vim.keymap.set({ "n", "t" }, "<S-C-u>", function()
       require("opencode").command("messages_half_page_up")
     end, { desc = "Messages half page up" })
 
-    vim.keymap.set("n", "<S-C-d>", function()
+    vim.keymap.set({ "n", "t" }, "<S-C-d>", function()
       require("opencode").command("messages_half_page_down")
     end, { desc = "Messages half page down" })
 
