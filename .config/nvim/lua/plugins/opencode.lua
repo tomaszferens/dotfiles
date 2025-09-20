@@ -63,7 +63,7 @@ return {
       require("opencode").prompt("Explain @cursor and its context")
     end, { desc = "Explain this code" })
 
-    vim.keymap.set("n", "<M-o>", function()
+    vim.keymap.set({ "n", "i", "t" }, "<M-o>", function()
       require("opencode").toggle()
       -- Focus the opencode terminal window if it exists
       local utils = require("utils.util")
