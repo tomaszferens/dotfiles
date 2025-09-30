@@ -9,7 +9,7 @@ return {
     { "<leader>ccc", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
   },
   opts = {
-    terminal_cmd = "~/.config/claude/local/node_modules/.bin/claude",
+    terminal_cmd = "~/.claude/local/claude",
     terminal = {
       split_width_percentage = 0.50,
     },
