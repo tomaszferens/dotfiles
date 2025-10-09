@@ -1,4 +1,4 @@
-local ai_utils = require("utils.claude")
+local ai_utils = require("utils.ai")
 
 local function get_sub_path(p)
   local cwd = vim.fn.getcwd()

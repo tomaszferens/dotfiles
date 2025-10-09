@@ -11,6 +11,8 @@ map("n", "<M-.>", "<c-w>5>")
 map("n", "<M-t>", "<C-W>+")
 map("n", "<M-s>", "<C-W>-")
 map("t", "<C-\\>", "<C-\\><C-n>")
+map("t", "<M-,>", "<Cmd>vertical resize -5<CR>")
+map("t", "<M-.>", "<Cmd>vertical resize +5<CR>")
 
 -- Window navigation in terminal mode
 map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Navigate to left window" })
@@ -41,7 +43,7 @@ vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {
 })
 
 -- Claude Code keybindings
-local claude_utils = require("utils.claude")
+local ai_utils = require("utils.ai")
 local utils = require("utils.util")
 
 map({ "n", "v" }, "<M-a>", function()
@@ -49,11 +51,11 @@ map({ "n", "v" }, "<M-a>", function()
   local mode = vim.api.nvim_get_mode().mode
   if mode == "v" or mode == "V" or mode == "\22" then
     -- Visual mode (v, V, or ^V) - send selection to AI terminals
-    claude_utils.send_visual_selection_to_ai_terminals()
+    ai_utils.send_visual_selection_to_ai_terminals()
   else
     -- Normal mode - add current file to AI terminals
     local current_file = vim.fn.expand("%:p")
-    claude_utils.add_file_to_ai_terminals(current_file)
+    ai_utils.add_file_to_ai_terminals(current_file)
   end
 end, { desc = "Send to AI terminal (Claude/OpenCode)" })
 
@@ -93,9 +95,7 @@ map("t", "<M-a>", function()
       -- Skip special buffers and check if file exists on disk
       if buftype == "" and buf_name ~= "" and not buf_name:match("^term://") and vim.fn.filereadable(buf_name) == 1 then
         local path = vim.fn.fnamemodify(buf_name, ":p")
-
-        local stripped = claude_utils.strip_cwd(path)
-        require("sidekick.cli").send({ msg = "@" .. stripped })
+        ai_utils.add_file_to_ai_terminals(path)
         return
       end
     end
