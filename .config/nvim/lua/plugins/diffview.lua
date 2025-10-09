@@ -9,23 +9,26 @@ return {
     { "<leader>ghh", "<CMD>DiffviewFileHistory<CR>", mode = { "n" }, desc = "Current branch history" },
   },
   config = function()
+    local go_to_file_key_map = {
+      "n",
+      "gf",
+      function()
+        local path = require("diffview.lib").get_current_view().panel:get_item_at_cursor().absolute_path
+        vim.cmd("DiffviewClose")
+        vim.cmd(string.format("edit %s", vim.fn.fnameescape(path)))
+      end,
+      { desc = "Open file in previous tab and close current tab" },
+    }
+
     require("diffview").setup({
       keymaps = {
         view = {
           ["<C-g>"] = "<CMD>DiffviewClose<CR>",
+          go_to_file_key_map,
         },
         file_panel = {
           ["<C-g>"] = "<CMD>DiffviewClose<CR>",
-          {
-            "n",
-            "gf",
-            function()
-              local path = require("diffview.lib").get_current_view().panel:get_item_at_cursor().absolute_path
-              vim.cmd("DiffviewClose")
-              vim.cmd(string.format("edit %s", vim.fn.fnameescape(path)))
-            end,
-            { desc = "Open file in previous tab and close current tab" },
-          },
+          go_to_file_key_map,
         },
       },
       opts = {

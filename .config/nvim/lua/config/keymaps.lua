@@ -12,6 +12,12 @@ map("n", "<M-t>", "<C-W>+")
 map("n", "<M-s>", "<C-W>-")
 map("t", "<C-\\>", "<C-\\><C-n>")
 
+-- Window navigation in terminal mode
+map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Navigate to left window" })
+map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Navigate to bottom window" })
+map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Navigate to top window" })
+map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Navigate to right window" })
+
 map(
   "n",
   "<leader>zc",
@@ -52,11 +58,7 @@ map({ "n", "v" }, "<M-a>", function()
 end, { desc = "Send to AI terminal (Claude/OpenCode)" })
 
 map("t", "<S-CR>", function()
-  local active_terminal = claude_utils.get_active_ai_terminal()
-
-  if active_terminal == "opencode" then
-    require("opencode").command("input_newline")
-  end
+  require("sidekick.cli").send({ msg = "" })
 end, { desc = "New line in AI terminal" })
 
 map({ "n", "i" }, "<M-f>", function()
@@ -90,7 +92,10 @@ map("t", "<M-a>", function()
 
       -- Skip special buffers and check if file exists on disk
       if buftype == "" and buf_name ~= "" and not buf_name:match("^term://") and vim.fn.filereadable(buf_name) == 1 then
-        claude_utils.add_file_to_ai_terminals(vim.fn.fnamemodify(buf_name, ":p"))
+        local path = vim.fn.fnamemodify(buf_name, ":p")
+
+        local stripped = claude_utils.strip_cwd(path)
+        require("sidekick.cli").send({ msg = "@" .. stripped })
         return
       end
     end

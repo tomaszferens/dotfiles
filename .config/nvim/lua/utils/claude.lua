@@ -117,26 +117,28 @@ end
 
 -- Add file to both Claude Code and OpenCode terminals if they exist
 function M.add_file_to_ai_terminals(path)
-  local utils = require("utils.util")
-  local added_to_any = false
-
-  -- Check for Claude Code terminal
-  local claude_bufnr = utils.find_terminal_buffer_by_names({ "claude", "ClaudeCode" })
-  if claude_bufnr and utils.is_terminal_visible(claude_bufnr) then
-    M.add_to_claude(path)
-    added_to_any = true
-  end
-
-  -- Check for OpenCode terminal
-  local opencode_bufnr = utils.find_terminal_buffer_by_names({ "opencode" })
-  if opencode_bufnr and utils.is_terminal_visible(opencode_bufnr) then
-    M.add_to_opencode(path)
-    added_to_any = true
-  end
-
-  if not added_to_any then
-    vim.notify("No AI terminal found (Claude Code or OpenCode)", vim.log.levels.WARN)
-  end
+  local stripped = M.strip_cwd(path)
+  require("sidekick.cli").send({ msg = "@" .. stripped })
+  -- local utils = require("utils.util")
+  -- local added_to_any = false
+  --
+  -- -- Check for Claude Code terminal
+  -- local claude_bufnr = utils.find_terminal_buffer_by_names({ "claude", "ClaudeCode" })
+  -- if claude_bufnr and utils.is_terminal_visible(claude_bufnr) then
+  --   M.add_to_claude(path)
+  --   added_to_any = true
+  -- end
+  --
+  -- -- Check for OpenCode terminal
+  -- local opencode_bufnr = utils.find_terminal_buffer_by_names({ "opencode" })
+  -- if opencode_bufnr and utils.is_terminal_visible(opencode_bufnr) then
+  --   M.add_to_opencode(path)
+  --   added_to_any = true
+  -- end
+  --
+  -- if not added_to_any then
+  --   vim.notify("No AI terminal found (Claude Code or OpenCode)", vim.log.levels.WARN)
+  -- end
 end
 
 -- Function to detect which AI terminal is opened
