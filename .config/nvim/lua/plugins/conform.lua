@@ -19,7 +19,11 @@ function get_project_formatter()
   local project = cwd:match("([^/]+)$")
 
   local config = per_project_formatters[project]
-  return config or {}
+  -- Default fallback for projects not in the list
+  return config or {
+    typescript = ts_format_eslint_prettier,
+    typescriptreact = ts_format_eslint_prettier,
+  }
 end
 
 return {
