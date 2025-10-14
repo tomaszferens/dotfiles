@@ -59,10 +59,6 @@ map({ "n", "v" }, "<M-a>", function()
   end
 end, { desc = "Send to AI terminal (Claude/OpenCode)" })
 
-map("t", "<S-CR>", function()
-  require("sidekick.cli").send({ msg = "" })
-end, { desc = "New line in AI terminal" })
-
 map({ "n", "i" }, "<M-f>", function()
   -- Define terminal configurations in priority order
   -- OpenCode first (if visible), then Claude Code
