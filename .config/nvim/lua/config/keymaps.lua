@@ -34,6 +34,10 @@ map({ "n", "i" }, "<C-c>", "<Esc><cmd>%y+<CR>", { desc = "Copy all text", norema
 map("n", "]<tab>", "<cmd>tabnext<cr>", { desc = "Next Tab" })
 map("n", "[<tab>", "<cmd>tabprevious<cr>", { desc = "Previous Tab" })
 
+map("n", "<leader>xr", function()
+  require("quicker").refresh()
+end, { desc = "Refresh Quickfix List" })
+
 local markdown_utils = require("utils.markdown")
 
 vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {

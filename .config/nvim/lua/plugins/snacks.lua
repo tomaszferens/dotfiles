@@ -213,6 +213,15 @@ return {
       },
     },
     scroll = { enabled = false },
+    bigfile = { enabled = false },
+    indent = {
+      scope = {
+        enabled = false,
+      },
+    },
+    animate = {
+      enabled = false,
+    },
   },
   keys = {
     { "<leader>fF", false },
