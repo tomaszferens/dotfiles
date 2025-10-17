@@ -6,8 +6,8 @@ local on_mac = wezterm.target_triple == 'aarch64-apple-darwin'
 
 -- Font configuration
 local font_family = 'JetBrainsMono Nerd Font'
-local font_size = on_mac and 14 or 20
-local frame_font_size = on_mac and 12 or 18
+local font_size = on_mac and 16 or 20
+local frame_font_size = on_mac and 14 or 18
 
 -- Color theme.
 local colors = {
@@ -66,7 +66,7 @@ config.cursor_thickness = 2
 -- Tab bar.
 config.hide_tab_bar_if_only_one_tab = true
 config.window_frame = {
-    font = wezterm.font(font_family, { weight = 'DemiBold' }),
+    font = wezterm.font(font_family, { weight = 'Regular' }),
     font_size = frame_font_size,
     active_titlebar_bg = colors.bg,
     inactive_titlebar_bg = colors.bg,
@@ -76,7 +76,7 @@ config.window_frame = {
 config.font_size = font_size
 config.cell_width = 0.9
 config.line_height = on_mac and 1.2 or 1.25
-config.font = wezterm.font(font_family, { weight = 'DemiBold' })
+config.font = wezterm.font(font_family, { weight = 'Regular', stretch = 'Normal' })
 
 -- Make underlines THICK.
 config.underline_position = -6
