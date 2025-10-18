@@ -6,7 +6,7 @@ local on_mac = wezterm.target_triple == 'aarch64-apple-darwin'
 
 -- Font configuration
 local font_family = 'JetBrainsMono Nerd Font'
-local font_size = on_mac and 16 or 20
+local font_size = on_mac and 15 or 20
 local frame_font_size = on_mac and 14 or 18
 
 -- Color theme.
