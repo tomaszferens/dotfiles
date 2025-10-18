@@ -1,5 +1,17 @@
 local M = {}
 
+function M.send(arg_object)
+  local saved_clipboard = vim.fn.getreg("+")
+
+  vim.fn.setreg("+", "")
+
+  require("sidekick.cli").send(arg_object)
+
+  if saved_clipboard then
+    vim.fn.setreg("+", saved_clipboard)
+  end
+end
+
 function M.strip_cwd(p)
   local cwd = vim.fn.getcwd()
   local file_path = p
@@ -35,12 +47,12 @@ function M.send_visual_selection_to_ai_terminals()
     reference = "@" .. sub_path .. "L" .. start_line .. "-" .. end_line
   end
 
-  require("sidekick.cli").send({ msg = reference })
+  M.send({ msg = reference })
 end
 
 function M.add_path_to_ai_terminal(path)
   local stripped = M.strip_cwd(path)
-  require("sidekick.cli").send({ msg = "@" .. stripped })
+  M.send({ msg = "@" .. stripped })
 end
 
 return M

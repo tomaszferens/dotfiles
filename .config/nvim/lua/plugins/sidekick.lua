@@ -15,7 +15,7 @@ return {
     {
       "<M-a>",
       function()
-        require("sidekick.cli").send({ msg = "{file}" })
+        require("utils.ai").send({ msg = "{file}" })
       end,
       desc = "Add file to AI terminal",
     },
@@ -30,7 +30,7 @@ return {
     {
       "<S-CR>",
       function()
-        require("sidekick.cli").send({ msg = "\n" })
+        require("utils.ai").send({ msg = "\n" })
       end,
       desc = "New line in AI terminal",
       mode = { "t" },
@@ -46,14 +46,14 @@ return {
     {
       "<leader>af",
       function()
-        require("sidekick.cli").send({ msg = "{file}" })
+        require("utils.ai").send({ msg = "{file}" })
       end,
       desc = "Send File",
     },
     {
       "<leader>av",
       function()
-        require("sidekick.cli").send({ msg = "{selection}" })
+        require("utils.ai").send({ msg = "{selection}" })
       end,
       mode = { "x" },
       desc = "Send Visual Selection",
