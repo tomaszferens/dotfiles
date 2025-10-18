@@ -6,10 +6,12 @@ return {
     "rebelot/kanagawa.nvim",
   },
   { "EdenEast/nightfox.nvim" },
+  { "rose-pine/neovim" },
+  { "catppuccin/nvim", name = "catppuccin" },
   {
     "LazyVim/LazyVim",
     opts = {
-      -- colorscheme = "Vordfox",
+      -- colorscheme = "catppuccin-macchiato",
     },
   },
 }
