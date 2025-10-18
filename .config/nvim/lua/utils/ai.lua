@@ -38,7 +38,7 @@ function M.send_visual_selection_to_ai_terminals()
   require("sidekick.cli").send({ msg = reference })
 end
 
-function M.add_file_to_ai_terminals(path)
+function M.add_path_to_ai_terminal(path)
   local stripped = M.strip_cwd(path)
   require("sidekick.cli").send({ msg = "@" .. stripped })
 end

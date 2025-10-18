@@ -59,7 +59,7 @@ map({ "n", "v" }, "<M-a>", function()
   else
     -- Normal mode - add current file to AI terminals
     local current_file = vim.fn.expand("%:p")
-    ai_utils.add_file_to_ai_terminals(current_file)
+    ai_utils.add_path_to_ai_terminal(current_file)
   end
 end, { desc = "Send to AI terminal (Claude/OpenCode)" })
 
@@ -95,7 +95,7 @@ map("t", "<M-a>", function()
       -- Skip special buffers and check if file exists on disk
       if buftype == "" and buf_name ~= "" and not buf_name:match("^term://") and vim.fn.filereadable(buf_name) == 1 then
         local path = vim.fn.fnamemodify(buf_name, ":p")
-        ai_utils.add_file_to_ai_terminals(path)
+        ai_utils.add_path_to_ai_terminal(path)
         return
       end
     end

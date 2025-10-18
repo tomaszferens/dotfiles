@@ -96,7 +96,7 @@ local function smart_add_action(picker)
   if picker.init_opts.source == "explorer" then
     local selected = picker:current()
     if selected and selected.file then
-      ai_utils.add_file_to_ai_terminals(selected.file)
+      ai_utils.add_path_to_ai_terminal(selected.file)
     end
   else
     copy_results_to_clipboard(picker)
@@ -179,7 +179,7 @@ return {
             ai_add_explorer = function(picker)
               local selected = picker:current()
               if selected and selected.file then
-                ai_utils.add_file_to_ai_terminals(selected.file)
+                ai_utils.add_path_to_ai_terminal(selected.file)
               end
             end,
             smart_add_action = smart_add_action,
