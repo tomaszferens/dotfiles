@@ -1,6 +1,5 @@
 local ts_format_eslint_prettier = {
   "prettierd",
-  lsp_format = "prefer",
 }
 
 local per_project_formatters = {

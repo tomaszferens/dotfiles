@@ -1,6 +1,3 @@
-local keys = require("lazyvim.plugins.lsp.keymaps").get()
-keys[#keys + 1] = { "<leader>cc", false }
-
 return {
   {
     "neovim/nvim-lspconfig",
@@ -17,10 +14,8 @@ return {
       },
       setup = {
         vtsls = function()
-          require("lazyvim.util").lsp.on_attach(function(client)
-            if client.name == "vtsls" then
-              client.server_capabilities.documentFormattingProvider = false
-            end
+          Snacks.util.lsp.on({ name = "vtsls" }, function(_buf, client)
+            client.server_capabilities.documentFormattingProvider = false
           end)
         end,
       },
@@ -41,5 +36,17 @@ return {
         },
       })
     end,
+  },
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        ["*"] = {
+          keys = {
+            { "<leader>cc", false },
+          },
+        },
+      },
+    },
   },
 }
