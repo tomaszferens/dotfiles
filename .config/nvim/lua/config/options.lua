@@ -16,13 +16,14 @@ vim.opt.diffopt = {
   "indent-heuristic",
 }
 
+vim.opt.relativenumber = false
+vim.g.ai_cmp = false
+
 -- diff line backgrounds
 vim.api.nvim_set_hl(0, "DiffAdd", { bg = "#34462F" })
 vim.api.nvim_set_hl(0, "DiffDelete", { bg = "#462F2F" })
 vim.api.nvim_set_hl(0, "DiffChange", { bg = "#2F4146" })
 vim.api.nvim_set_hl(0, "DiffText", { bg = "#463C2F" })
-
-vim.opt.relativenumber = false
 
 -- vim.api.nvim_set_hl(0, "SnacksPickerDir", { fg = "#939ec9" })
 -- vim.api.nvim_set_hl(0, "SnacksPickerPathHidden", { fg = "#939ec9" })
