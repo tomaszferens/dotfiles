@@ -14,6 +14,8 @@ map("t", "<C-\\>", "<C-\\><C-n>")
 map("t", "<M-,>", "<Cmd>vertical resize -5<CR>")
 map("t", "<M-.>", "<Cmd>vertical resize +5<CR>")
 
+map({ "n", "t" }, "<C-=>", "<Cmd>wincmd =<CR>", { desc = "Equalize window sizes" })
+
 -- Window navigation in terminal mode
 map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Navigate to left window" })
 map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Navigate to bottom window" })
@@ -48,40 +50,9 @@ vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {
 
 -- Claude Code keybindings
 local ai_utils = require("utils.ai")
-local utils = require("utils.util")
-
-map({ "n", "v" }, "<M-a>", function()
-  -- Check if we're in a snacks picker (this will be overridden by explorer keybinding when in explorer)
-  local mode = vim.api.nvim_get_mode().mode
-  if mode == "v" or mode == "V" or mode == "\22" then
-    -- Visual mode (v, V, or ^V) - send selection to AI terminals
-    ai_utils.send_visual_selection_to_ai_terminals()
-  else
-    -- Normal mode - add current file to AI terminals
-    local current_file = vim.fn.expand("%:p")
-    ai_utils.add_path_to_ai_terminal(current_file)
-  end
-end, { desc = "Send to AI terminal (Claude/OpenCode)" })
 
 map({ "n", "i" }, "<M-f>", function()
-  -- Define terminal configurations in priority order
-  -- OpenCode first (if visible), then Claude Code
-  local terminal_configs = {
-    {
-      names = { "opencode" },
-      create_command = function()
-        require("opencode").toggle()
-      end,
-    },
-    {
-      names = { "claude", "ClaudeCode" },
-      create_command = function()
-        vim.cmd("ClaudeCode")
-      end,
-    },
-  }
-
-  utils.focus_or_create_terminal(terminal_configs)
+  ai_utils.focus_terminal()
 end, { desc = "Focus AI Terminal (OpenCode/Claude)" })
 
 map("t", "<M-a>", function()

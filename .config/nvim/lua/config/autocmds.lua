@@ -22,3 +22,11 @@ vim.api.nvim_create_autocmd("FileType", {
 -- vim.lsp.enable({
 --   "tailwindcss",
 -- })
+
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  callback = function()
+    if vim.bo.filetype == "ergoterm" then
+      vim.wo.list = false
+    end
+  end,
+})

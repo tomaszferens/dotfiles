@@ -140,6 +140,11 @@ config.keys = {
         mods = 'SHIFT|CTRL',
         action = act.DisableDefaultAssignment,
     },
+    {
+        key = '=',
+        mods = 'CTRL',
+        action = act.DisableDefaultAssignment,
+    },
 }
 -- I just need to toggle fullscreen on Mac. On Linux I use the window manager.
 if on_mac then
