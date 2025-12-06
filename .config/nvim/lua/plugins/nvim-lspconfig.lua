@@ -44,6 +44,7 @@ return {
         ["*"] = {
           keys = {
             { "<leader>cc", false },
+            { "<leader>ca", false },
           },
         },
       },
