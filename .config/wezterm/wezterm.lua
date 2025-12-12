@@ -84,36 +84,58 @@ config.underline_thickness = '250%'
 
 -- Project workspace launcher.
 local function project_workspace()
-    local home = os.getenv 'HOME'
-    local projects_dir = home .. '/projects'
+    return wezterm.action_callback(function(window, pane)
+        local home = os.getenv 'HOME'
+        local projects_dir = home .. '/projects'
 
-    local projects = {}
-    for _, entry in ipairs(wezterm.glob(projects_dir .. '/*')) do
-        local name = entry:match '([^/]+)$'
-        table.insert(projects, { id = entry, label = name })
-    end
+        -- Get existing workspaces (fresh check each time)
+        local existing_workspaces = {}
+        for _, name in ipairs(mux.get_workspace_names()) do
+            existing_workspaces[name] = true
+        end
 
-    return act.InputSelector {
-        title = 'Select Project',
-        choices = projects,
-        action = wezterm.action_callback(function(window, pane, id, label)
-            if not id then return end
+        local projects = {}
+        for _, entry in ipairs(wezterm.glob(projects_dir .. '/*')) do
+            local name = entry:match '([^/]+)$'
+            -- Mark existing workspaces in the label
+            local label = existing_workspaces[name] and name .. ' *' or name
+            table.insert(projects, { id = entry, label = label })
+        end
 
-            local tab, first_pane, new_window = mux.spawn_window {
-                workspace = label,
-                cwd = id,
-            }
+        window:perform_action(
+            act.InputSelector {
+                title = 'Select Project (* = running)',
+                choices = projects,
+                action = wezterm.action_callback(function(inner_window, inner_pane, id, label)
+                    if not id then return end
 
-            local second_tab, second_pane, _ = new_window:spawn_tab { cwd = id }
-            second_pane:split { direction = 'Bottom', cwd = id }
+                    -- Remove the " *" suffix if present to get the actual workspace name
+                    local workspace_name = label:gsub(' %*$', '')
 
-            -- Go back to first tab and launch nvim
-            tab:activate()
-            first_pane:send_text 'nvim\n'
+                    -- If workspace already exists, just switch to it
+                    if existing_workspaces[workspace_name] then
+                        mux.set_active_workspace(workspace_name)
+                        return
+                    end
 
-            mux.set_active_workspace(label)
-        end),
-    }
+                    local tab, first_pane, new_window = mux.spawn_window {
+                        workspace = workspace_name,
+                        cwd = id,
+                    }
+
+                    local second_tab, second_pane, _ = new_window:spawn_tab { cwd = id }
+                    second_pane:split { direction = 'Bottom', cwd = id }
+
+                    -- Go back to first tab and launch nvim
+                    tab:activate()
+                    first_pane:send_text 'nvim\n'
+
+                    mux.set_active_workspace(workspace_name)
+                end),
+            },
+            pane
+        )
+    end)
 end
 
 -- Keybindings.
