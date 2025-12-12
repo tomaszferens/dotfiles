@@ -82,6 +82,40 @@ config.font = wezterm.font(font_family, { weight = 'Regular', stretch = 'Normal'
 config.underline_position = -6
 config.underline_thickness = '250%'
 
+-- Project workspace launcher.
+local function project_workspace()
+    local home = os.getenv 'HOME'
+    local projects_dir = home .. '/projects'
+
+    local projects = {}
+    for _, entry in ipairs(wezterm.glob(projects_dir .. '/*')) do
+        local name = entry:match '([^/]+)$'
+        table.insert(projects, { id = entry, label = name })
+    end
+
+    return act.InputSelector {
+        title = 'Select Project',
+        choices = projects,
+        action = wezterm.action_callback(function(window, pane, id, label)
+            if not id then return end
+
+            local tab, first_pane, new_window = mux.spawn_window {
+                workspace = label,
+                cwd = id,
+            }
+
+            local second_tab, second_pane, _ = new_window:spawn_tab { cwd = id }
+            second_pane:split { direction = 'Bottom', cwd = id }
+
+            -- Go back to first tab and launch nvim
+            tab:activate()
+            first_pane:send_text 'nvim\n'
+
+            mux.set_active_workspace(label)
+        end),
+    }
+end
+
 -- Keybindings.
 local function pane_navigation_action(direction, fallback_direction)
     return wezterm.action_callback(function(win, pane)
@@ -104,6 +138,21 @@ config.keys = {
     { mods = mods, key = 'q', action = act.CloseCurrentPane { confirm = true } },
     { mods = mods, key = 'y', action = act.CopyTo 'Clipboard' },
     { mods = mods, key = 'p', action = act.PasteFrom 'Clipboard' },
+    { mods = mods, key = 'w', action = project_workspace() },
+    {
+        mods = 'CTRL|ALT',
+        key = 'w',
+        action = wezterm.action_callback(function(win, pane)
+            local workspace = win:active_workspace()
+            for _, w in ipairs(mux.all_windows()) do
+                if w:get_workspace() == workspace then
+                    w:gui_window():perform_action(act.CloseCurrentTab { confirm = false }, pane)
+                end
+            end
+        end),
+    },
+    { mods = mods, key = 'n', action = act.SwitchWorkspaceRelative(1) },
+    { mods = mods, key = 'b', action = act.SwitchWorkspaceRelative(-1) },
     { mods = 'ALT', key = '-', action = act.DecreaseFontSize },
     { mods = 'ALT', key = '=', action = act.IncreaseFontSize },
     { mods = 'ALT', key = '0', action = act.ResetFontSize },
