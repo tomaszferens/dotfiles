@@ -6,7 +6,7 @@ local on_mac = wezterm.target_triple == 'aarch64-apple-darwin'
 
 -- Font configuration
 local font_family = 'JetBrainsMono Nerd Font'
-local font_size = on_mac and 15 or 20
+local font_size = on_mac and 14 or 20
 local frame_font_size = on_mac and 14 or 18
 
 -- Color theme.
@@ -107,7 +107,9 @@ local function project_workspace()
                 title = 'Select Project (* = running)',
                 choices = projects,
                 action = wezterm.action_callback(function(inner_window, inner_pane, id, label)
-                    if not id then return end
+                    if not id then
+                        return
+                    end
 
                     -- Remove the " *" suffix if present to get the actual workspace name
                     local workspace_name = label:gsub(' %*$', '')

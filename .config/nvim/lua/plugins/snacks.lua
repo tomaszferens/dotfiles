@@ -229,6 +229,19 @@ return {
     { "<M-f>", false },
     { "<C-n>", "<leader>fE", desc = "Explorer Snacks (cwd)", remap = true },
     {
+      "<M-n>",
+      function()
+        local explorers = Snacks.picker.get({ source = "explorer" })
+        if #explorers > 0 then
+          explorers[1]:focus()
+        else
+          Snacks.explorer()
+        end
+      end,
+      desc = "Focus Explorer",
+      mode = { "n", "i", "t" },
+    },
+    {
       "<leader>fw",
       function()
         start_picker("live_grep")

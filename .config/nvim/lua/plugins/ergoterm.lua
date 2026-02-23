@@ -35,6 +35,16 @@ return {
         end,
       },
     })
+
+    ai_chats:new({
+      cmd = "pi",
+      name = "pi",
+      meta = {
+        add_file = function(file)
+          return "@" .. file
+        end,
+      },
+    })
   end,
   keys = {
     {
@@ -51,6 +61,14 @@ return {
         require("utils.ai").toggle("claude")
       end,
       desc = "Toggle Claude",
+      mode = { "n", "t", "i", "x" },
+    },
+    {
+      "<M-y>",
+      function()
+        require("utils.ai").toggle("pi")
+      end,
+      desc = "Toggle pi",
       mode = { "n", "t", "i", "x" },
     },
     {
