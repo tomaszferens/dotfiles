@@ -21,6 +21,7 @@ map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Navigate to left window" })
 map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Navigate to bottom window" })
 map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Navigate to top window" })
 map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Navigate to right window" })
+map("t", "<C-n>", "<cmd>lua Snacks.explorer()<cr>", { desc = "Explorer Snacks (cwd)" })
 
 map(
   "n",
