@@ -12,12 +12,12 @@ return {
       sticky = true,
       watch_files = true,
       size = {
-        right = "50%",
+        right = "40%",
       },
     })
 
     ai_chats:new({
-      cmd = "claude",
+      cmd = "claude --dangerously-skip-permissions",
       name = "claude",
       meta = {
         add_file = function(file)

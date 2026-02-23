@@ -110,150 +110,188 @@ local picker_actions = {
 }
 
 return {
-  "folke/snacks.nvim",
-  opts = {
-    picker = {
-      sources = {
-        lsp_references = {
-          actions = picker_actions,
-        },
-        grep = {
-          actions = picker_actions,
-        },
-        live_grep = {
-          actions = picker_actions,
-        },
-        files = {
-          actions = picker_actions,
-        },
-        explorer = {
-          hidden = true,
-          ignored = true,
-          actions = {
-            copy_name = function(picker)
-              local selected = picker:current()
-              local file_name = vim.fn.fnamemodify(selected.file, ":t")
+  {
+    "folke/snacks.nvim",
+    opts = function(_, opts)
+      local keys = opts.dashboard and opts.dashboard.preset and opts.dashboard.preset.keys or {}
+      for i, key in ipairs(keys) do
+        if key.key == "n" then
+          keys[i] = {
+            icon = "󰨝 ",
+            key = "n",
+            desc = "Workspace",
+            action = function()
+              require("persistence").load()
+              vim.schedule(function()
+                Snacks.explorer()
+                require("utils.ai").toggle("claude")
+                vim.defer_fn(function()
+                  -- Focus the first normal buffer window
+                  for _, win in ipairs(vim.api.nvim_list_wins()) do
+                    local buf = vim.api.nvim_win_get_buf(win)
+                    local bt = vim.bo[buf].buftype
+                    if bt == "" then
+                      vim.api.nvim_set_current_win(win)
+                      break
+                    end
+                  end
+                  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+                end, 100)
+              end)
+            end,
+          }
+          break
+        end
+      end
+    end,
+  },
+  {
+    "folke/snacks.nvim",
+    opts = {
+      picker = {
+        sources = {
+          lsp_references = {
+            actions = picker_actions,
+          },
+          grep = {
+            actions = picker_actions,
+          },
+          live_grep = {
+            actions = picker_actions,
+          },
+          files = {
+            actions = picker_actions,
+          },
+          explorer = {
+            hidden = true,
+            ignored = true,
+            actions = {
+              copy_name = function(picker)
+                local selected = picker:current()
+                local file_name = vim.fn.fnamemodify(selected.file, ":t")
 
-              if selected.type == "file" then
+                if selected.type == "file" then
+                  vim.fn.setreg("+", file_name)
+                  return
+                end
+
+                -- For directories, add trailing slash
                 vim.fn.setreg("+", file_name)
-                return
-              end
+              end,
+              copy_rel_cwd = function(picker)
+                local selected = picker:current()
 
-              -- For directories, add trailing slash
-              vim.fn.setreg("+", file_name)
+                if selected.type == "file" then
+                  vim.fn.setreg("+", get_sub_path(selected.file))
+                  return
+                end
+
+                vim.fn.setreg("+", get_sub_path(selected.file .. "/"))
+              end,
+              grep_in_directory = function(picker)
+                local selected = picker:current()
+
+                if selected.type == "file" then
+                  grep_in_directory(selected.parent)
+                  return
+                end
+
+                grep_in_directory(selected)
+              end,
+              find_in_directory = function(picker)
+                local selected = picker:current()
+
+                if selected.type == "file" then
+                  find_file_in_directory(selected.parent)
+                  return
+                end
+
+                find_file_in_directory(selected)
+              end,
+              code_companion_add_explorer = function(picker)
+                local ccMod = require("utils.explorer_code_companion_add")
+                ccMod.explorer_code_compaion_add(picker)
+              end,
+              ai_add_explorer = function(picker)
+                local selected = picker:current()
+                if selected and selected.file then
+                  ai_utils.add_path_to_ai_terminal(selected.file)
+                end
+              end,
+              smart_add_action = smart_add_action,
+            },
+          },
+        },
+        win = {
+          list = {
+            on_buf = function(self)
+              self:execute("calculate_file_truncate_width")
             end,
-            copy_rel_cwd = function(picker)
-              local selected = picker:current()
-
-              if selected.type == "file" then
-                vim.fn.setreg("+", get_sub_path(selected.file))
-                return
-              end
-
-              vim.fn.setreg("+", get_sub_path(selected.file .. "/"))
-            end,
-            grep_in_directory = function(picker)
-              local selected = picker:current()
-
-              if selected.type == "file" then
-                grep_in_directory(selected.parent)
-                return
-              end
-
-              grep_in_directory(selected)
-            end,
-            find_in_directory = function(picker)
-              local selected = picker:current()
-
-              if selected.type == "file" then
-                find_file_in_directory(selected.parent)
-                return
-              end
-
-              find_file_in_directory(selected)
-            end,
-            code_companion_add_explorer = function(picker)
-              local ccMod = require("utils.explorer_code_companion_add")
-              ccMod.explorer_code_compaion_add(picker)
-            end,
-            ai_add_explorer = function(picker)
-              local selected = picker:current()
-              if selected and selected.file then
-                ai_utils.add_path_to_ai_terminal(selected.file)
-              end
-            end,
-            smart_add_action = smart_add_action,
+            keys = {
+              ["<C-n>"] = false,
+              ["<M-f>"] = false,
+              ["<C-y>"] = { "copy_name" },
+              ["w"] = { "grep_in_directory" },
+              ["f"] = { "find_in_directory" },
+              ["<leader>ad"] = { "code_companion_add_explorer" },
+              ["O"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
+              ["T"] = { { "tab" }, mode = { "n", "i" } },
+              ["Y"] = { "copy_rel_cwd" },
+              ["<M-a>"] = { "smart_add_action" },
+            },
+          },
+          input = {
+            keys = {
+              ["<C-Tab>"] = { { "tab" }, mode = { "n", "i" } },
+              ["<M-a>"] = { { "smart_add_action" }, mode = { "n", "i" } },
+            },
           },
         },
       },
-      win = {
-        list = {
-          on_buf = function(self)
-            self:execute("calculate_file_truncate_width")
-          end,
-          keys = {
-            ["<C-n>"] = false,
-            ["<M-f>"] = false,
-            ["<C-y>"] = { "copy_name" },
-            ["w"] = { "grep_in_directory" },
-            ["f"] = { "find_in_directory" },
-            ["<leader>ad"] = { "code_companion_add_explorer" },
-            ["O"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
-            ["T"] = { { "tab" }, mode = { "n", "i" } },
-            ["Y"] = { "copy_rel_cwd" },
-            ["<M-a>"] = { "smart_add_action" },
-          },
-        },
-        input = {
-          keys = {
-            ["<C-Tab>"] = { { "tab" }, mode = { "n", "i" } },
-            ["<M-a>"] = { { "smart_add_action" }, mode = { "n", "i" } },
-          },
+      scroll = { enabled = false },
+      bigfile = { enabled = false },
+      indent = {
+        scope = {
+          enabled = false,
         },
       },
-    },
-    scroll = { enabled = false },
-    bigfile = { enabled = false },
-    indent = {
-      scope = {
+      animate = {
         enabled = false,
       },
     },
-    animate = {
-      enabled = false,
-    },
-  },
-  keys = {
-    { "<leader>fF", false },
-    { "<leader>ff", false },
-    { "<M-f>", false },
-    { "<C-n>", "<leader>fE", desc = "Explorer Snacks (cwd)", remap = true },
-    {
-      "<M-n>",
-      function()
-        local explorers = Snacks.picker.get({ source = "explorer" })
-        if #explorers > 0 then
-          explorers[1]:focus()
-        else
-          Snacks.explorer()
-        end
-      end,
-      desc = "Focus Explorer",
-      mode = { "n", "i", "t" },
-    },
-    {
-      "<leader>fw",
-      function()
-        start_picker("live_grep")
-      end,
-      desc = "Grep (cwd)",
-    },
-    {
-      "<leader>ff",
-      function()
-        start_picker("files")
-      end,
-      desc = "Find files (cwd)",
+    keys = {
+      { "<leader>fF", false },
+      { "<leader>ff", false },
+      { "<M-f>", false },
+      { "<C-n>", "<leader>fE", desc = "Explorer Snacks (cwd)", remap = true },
+      {
+        "<M-n>",
+        function()
+          vim.cmd("stopinsert")
+          local explorers = Snacks.picker.get({ source = "explorer" })
+          if #explorers > 0 then
+            explorers[1]:focus("list")
+          else
+            Snacks.explorer()
+          end
+        end,
+        desc = "Focus Explorer",
+        mode = { "n", "i", "t" },
+      },
+      {
+        "<leader>fw",
+        function()
+          start_picker("live_grep")
+        end,
+        desc = "Grep (cwd)",
+      },
+      {
+        "<leader>ff",
+        function()
+          start_picker("files")
+        end,
+        desc = "Find files (cwd)",
+      },
     },
   },
 }

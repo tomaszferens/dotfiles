@@ -45,6 +45,7 @@ return {
           keys = {
             { "<leader>cc", false },
             { "<leader>ca", false },
+            { "<M-n>", false },
           },
         },
       },
