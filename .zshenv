@@ -15,3 +15,4 @@ export SHELL_SESSIONS_DISABLE=1
 
 # Ripgrep.
 export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/.ripgreprc"
+alias claude="claude --dangerously-skip-permissions"
