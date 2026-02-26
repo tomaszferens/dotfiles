@@ -175,6 +175,29 @@ config.keys = {
             end
         end),
     },
+    {
+        mods = mods,
+        key = 'r',
+        action = wezterm.action_callback(function(win, pane)
+            win:perform_action(
+                act.InputSelector {
+                    title = 'Run in new window:',
+                    choices = {
+                        { id = 'ls', label = 'ls' },
+                        { id = 'htop', label = 'htop' },
+                    },
+                    action = wezterm.action_callback(function(_, _, id)
+                        if not id then
+                            return
+                        end
+                        local _, first_pane, _ = mux.spawn_window {}
+                        first_pane:send_text(id .. '\n')
+                    end),
+                },
+                pane
+            )
+        end),
+    },
     { mods = mods, key = 'n', action = act.SwitchWorkspaceRelative(1) },
     { mods = mods, key = 'b', action = act.SwitchWorkspaceRelative(-1) },
     { mods = 'ALT', key = '-', action = act.DecreaseFontSize },
