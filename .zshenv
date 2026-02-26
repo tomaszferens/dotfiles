@@ -19,7 +19,7 @@ alias claude="claude --dangerously-skip-permissions"
 
 # New terminal window — run any command in a new WezTerm window.
 ntw() {
-  if [[ $# -eq 0 ]]; then
+  if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]]; then
     echo "Usage: ntw <command>"
     echo ""
     echo "Spawns a new WezTerm window and runs <command> in it."
