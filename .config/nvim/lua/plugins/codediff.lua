@@ -3,7 +3,7 @@ return {
   cmd = "CodeDiff",
   keys = {
     { "<C-g>", "<CMD>CodeDiff<CR>", desc = "Git diff explorer" },
-    { "<leader>gf", "<CMD>CodeDiff history HEAD~40..HEAD %<CR>", desc = "File commit history (last 40)" },
+    { "<leader>gf", "<CMD>CodeDiff history %<CR>", desc = "File commit history" },
     { "<leader>ghh", "<CMD>CodeDiff history<CR>", desc = "Git commit history" },
   },
   config = function()
@@ -12,6 +12,9 @@ return {
         view = {
           open_in_prev_tab = false,
         },
+      },
+      explorer = {
+        view_mode = "tree",
       },
     })
 
