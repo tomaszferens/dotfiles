@@ -1,0 +1,19 @@
+#!/bin/zsh
+if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]]; then
+  echo "Usage: ntw <command>"
+  echo ""
+  echo "Spawns a new WezTerm window and runs <command> in it."
+  echo ""
+  echo "Examples:"
+  echo "  ntw \"claude \"prompt goes here\"\""
+  echo "  ntw \"codex \"prompt goes here\"\""
+  echo "  ntw \"pi \"prompt goes here\"\""
+  echo "  ntw \"htop\""
+  echo "  ntw \"ls\""
+  exit 0
+fi
+cmd="$*"
+if [[ "$cmd" == *claude* ]]; then
+  cmd="CLAUDECODE=0 $cmd"
+fi
+wezterm cli spawn --new-window --cwd "$PWD" -- zsh -ic "$cmd; exec zsh"
