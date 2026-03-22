@@ -1,0 +1,18 @@
+{
+  "lastChangelogVersion": "0.61.1",
+  "defaultThinkingLevel": "xhigh",
+  "steeringMode": "all",
+  "theme": "tokyo-night",
+  "editorPaddingX": 1,
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-6",
+  "showHardwareCursor": false,
+  "packages": [
+    "npm:pi-rewind-hook",
+    "npm:pi-web-access",
+    "npm:@tintinweb/pi-subagents",
+    "npm:pi-rewind",
+    "npm:pi-extmgr",
+    "npm:oh-pi"
+  ]
+}

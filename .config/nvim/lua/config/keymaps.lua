@@ -43,7 +43,7 @@ end, { desc = "Refresh Quickfix List" })
 
 local markdown_utils = require("utils.markdown")
 
-vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {
+vim.keymap.set({ "n", "i", "t" }, "<C-`>", markdown_utils.insert_fence, {
   desc = "Insert Markdown code fence",
   noremap = true,
   silent = true,

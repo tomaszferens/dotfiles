@@ -124,7 +124,7 @@ return {
               require("persistence").load()
               vim.schedule(function()
                 Snacks.explorer()
-                require("utils.ai").toggle("claude")
+                require("utils.ai").toggle()
                 vim.defer_fn(function()
                   -- Focus the first normal buffer window
                   for _, win in ipairs(vim.api.nvim_list_wins()) do
