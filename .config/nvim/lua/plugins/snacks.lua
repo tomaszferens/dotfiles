@@ -121,11 +121,30 @@ return {
             key = "n",
             desc = "Workspace",
             action = function()
-              require("persistence").load()
+              local candidates = {
+                "README.md",
+                "readme.md",
+                "README.MD",
+                "package.json",
+                "LICENSE",
+                "LICENSE.md",
+                "license",
+                "license.md",
+              }
+
+              local cwd = vim.fn.getcwd()
+              for _, name in ipairs(candidates) do
+                local path = cwd .. "/" .. name
+                if vim.uv.fs_stat(path) then
+                  vim.cmd("edit " .. vim.fn.fnameescape(path))
+                  break
+                end
+              end
+
               vim.schedule(function()
                 Snacks.explorer()
-                require("utils.ai").toggle()
                 vim.defer_fn(function()
+                  require("utils.ai").toggle()
                   -- Focus the first normal buffer window
                   for _, win in ipairs(vim.api.nvim_list_wins()) do
                     local buf = vim.api.nvim_win_get_buf(win)
