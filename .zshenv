@@ -28,6 +28,7 @@ CONFIG_TRACKED=(
   ~/.config/wezterm
   ~/.config/mcphub
   ~/.pi/agent
+  ~/.pi/local-plugins
   ~/bin
 )
 

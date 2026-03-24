@@ -1,0 +1,26 @@
+{
+  "name": "pi-better-footer",
+  "version": "1.0.2-local.0",
+  "description": "Local fork of pi-vitals for a customizable powerline-style footer in pi",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {},
+  "files": [
+    "*.ts",
+    "*.json",
+    "README.md"
+  ],
+  "keywords": [
+    "pi",
+    "extension",
+    "footer",
+    "powerline",
+    "pi-package",
+    "pi-coding-agent"
+  ],
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "author": "Matt Cowger, local fork",
+  "license": "MIT"
+}

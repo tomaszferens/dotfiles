@@ -1,0 +1,73 @@
+{
+  "_comment": "Place this file at ~/.pi/agent/powerline.json",
+  
+  "leftSegments": [
+    "pi",
+    "separator",
+    "model",
+    "thinking",
+    "separator",
+    "path",
+    "git",
+    "separator",
+    "token_total",
+    "token_in",
+    "token_out",
+    "cache_read",
+    "cache_write"
+  ],
+  
+  "rightSegments": [
+    "separator",
+    "context_pct"
+  ],
+  
+  "icons": {
+    "pi": "",
+    "model": "",
+    "thinking": "",
+    "folder": "",
+    "git": "",
+    "tokens": "󰒠",
+    "input": "",
+    "output": "",
+    "cacheRead": "󱐌",
+    "cacheWrite": "󰥝",
+    "contextPct": "",
+    "contextTotal": "󰲏",
+    "separator": "",
+    "auto": ""
+  },
+  
+  "colors": {
+    "pi": "accent",
+    "model": "#d787af",
+    "path": "#00afaf",
+    "git": "success",
+    "gitDirty": "warning",
+    "gitClean": "success",
+    "thinking": "muted",
+    "thinkingHigh": "accent",
+    "context": "dim",
+    "contextWarn": "warning",
+    "contextError": "error",
+    "cost": "text",
+    "tokens": "muted",
+    "separator": "dim"
+  },
+  
+  "segmentOptions": {
+    "path": {
+      "mode": "basename"
+    },
+    "git": {
+      "showBranch": true,
+      "showStaged": true,
+      "showUnstaged": true,
+      "showUntracked": true
+    },
+    "context_pct": {
+      "showAutoIcon": false
+    }
+  }
+}
