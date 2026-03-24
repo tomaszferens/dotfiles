@@ -10,6 +10,7 @@ const DEFAULT_COLORS: Required<ColorScheme> = {
   git: "success",
   gitDirty: "warning",
   gitClean: "success",
+  gitPr: "#b281d6",
   thinking: "muted",
   thinkingHigh: "accent",
   context: "dim",

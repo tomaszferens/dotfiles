@@ -183,6 +183,28 @@ const gitSegment = {
   },
 };
 
+const gitBranchSegment = {
+  id: "git-branch" as const,
+  render(ctx: SegmentContext): RenderedSegment {
+    const { branch } = ctx.git;
+    if (!branch) return { content: "", visible: false };
+
+    const content = withIcon(ctx.icons.branch, branch);
+    return { content: color(ctx, "gitClean", content), visible: true };
+  },
+};
+
+const gitPullRequestSegment = {
+  id: "git-pull-request" as const,
+  render(ctx: SegmentContext): RenderedSegment {
+    const { prNumber } = ctx.git;
+    if (!prNumber) return { content: "", visible: false };
+
+    const content = withIcon(ctx.icons.pullRequest, `#${prNumber}`);
+    return { content: color(ctx, "gitPr", content), visible: true };
+  },
+};
+
 const thinkingSegment = {
   id: "thinking" as const,
   render(ctx: SegmentContext): RenderedSegment {
@@ -335,6 +357,8 @@ const SEGMENTS = {
   model: modelSegment,
   path: pathSegment,
   git: gitSegment,
+  "git-branch": gitBranchSegment,
+  "git-pull-request": gitPullRequestSegment,
   thinking: thinkingSegment,
   token_in: tokenInSegment,
   token_out: tokenOutSegment,

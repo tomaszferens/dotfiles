@@ -3,7 +3,7 @@ import { visibleWidth, truncateToWidth } from "@mariozechner/pi-tui";
 
 import type { SegmentContext, StatusLineSegmentId } from "./types.js";
 import { renderSegment } from "./segments.js";
-import { getGitStatus, invalidateGitStatus, invalidateGitBranch } from "./git-status.js";
+import { getGitStatus, invalidateGitStatus, invalidateGitBranch, invalidateGitPr } from "./git-status.js";
 import { getEffectiveConfig, clearUserConfigCache, loadUserConfig } from "./config.js";
 import { getIcons } from "./icons.js";
 import { getDefaultColors } from "./theme.js";
@@ -129,6 +129,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
       if (gitBranchPatterns.some(p => p.test(cmd))) {
         invalidateGitStatus();
         invalidateGitBranch();
+        invalidateGitPr();
         setTimeout(() => tuiRef?.requestRender(), 100);
       }
     }
@@ -143,6 +144,7 @@ export default function powerlineFooter(pi: ExtensionAPI) {
     if (gitBranchPatterns.some(p => p.test(event.command))) {
       invalidateGitStatus();
       invalidateGitBranch();
+      invalidateGitPr();
       setTimeout(() => tuiRef?.requestRender(), 100);
       setTimeout(() => tuiRef?.requestRender(), 300);
       setTimeout(() => tuiRef?.requestRender(), 500);

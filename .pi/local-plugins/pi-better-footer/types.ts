@@ -13,6 +13,7 @@ export type SemanticColor =
   | "git"
   | "gitDirty"
   | "gitClean"
+  | "gitPr"
   | "thinking"
   | "thinkingHigh"
   | "context"
@@ -32,6 +33,8 @@ export type StatusLineSegmentId =
   | "model"
   | "path"
   | "git"
+  | "git-branch"
+  | "git-pull-request"
   | "token_in"
   | "token_out"
   | "token_total"
@@ -64,6 +67,7 @@ export interface StatusLineSegmentOptions {
 // Git status data
 export interface GitStatus {
   branch: string | null;
+  prNumber: string | null;
   staged: number;
   unstaged: number;
   untracked: number;

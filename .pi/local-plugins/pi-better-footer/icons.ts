@@ -4,6 +4,7 @@ export interface IconSet {
   folder: string;
   branch: string;
   git: string;
+  pullRequest: string;
   tokens: string;
   contextPct: string;
   contextTotal: string;
@@ -24,6 +25,7 @@ export const NERD_ICONS: IconSet = {
   folder: "\uF115",     // nf-fa-folder_open
   branch: "\uF126",     // nf-fa-code_fork
   git: "\uF1D3",        // nf-fa-git
+  pullRequest: "\uF407", // nf-oct-git_pull_request
   tokens: "\uE26B",     // nf-seti-html
   contextPct: "\uE70F", // nf-dev-database
   contextTotal: "\uE70F", // nf-dev-database
@@ -44,6 +46,7 @@ export const ASCII_ICONS: IconSet = {
   folder: "📁",
   branch: "⎇",
   git: "⎇",
+  pullRequest: "⑃",
   tokens: "⊛",
   contextPct: "◫",
   contextTotal: "◫",

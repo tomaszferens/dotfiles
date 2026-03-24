@@ -13,14 +13,24 @@ interface CachedBranch {
   timestamp: number;
 }
 
+interface CachedPrNumber {
+  prNumber: string | null;
+  forBranch: string | null;
+  timestamp: number;
+}
+
 const CACHE_TTL_MS = 1000;
 const BRANCH_TTL_MS = 500;
+const PR_TTL_MS = 30000; // 30s — PR numbers don't change often
 let cachedStatus: CachedGitStatus | null = null;
 let cachedBranch: CachedBranch | null = null;
+let cachedPr: CachedPrNumber | null = null;
 let pendingFetch: Promise<void> | null = null;
 let pendingBranchFetch: Promise<void> | null = null;
+let pendingPrFetch: Promise<void> | null = null;
 let invalidationCounter = 0;
 let branchInvalidationCounter = 0;
+let prInvalidationCounter = 0;
 
 function parseGitStatusOutput(output: string): { staged: number; unstaged: number; untracked: number } {
   let staged = 0;
@@ -122,13 +132,85 @@ export function getCurrentBranch(providerBranch: string | null): string | null {
   return cachedBranch ? cachedBranch.branch : providerBranch;
 }
 
+async function fetchPrNumber(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const proc = spawn("gh", ["pr", "view", "--json", "number", "-q", ".number"], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let resolved = false;
+
+    const finish = (result: string | null) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timeoutId);
+      resolve(result);
+    };
+
+    proc.stdout.on("data", (data: Buffer) => {
+      stdout += data.toString();
+    });
+
+    proc.on("close", (code: number | null) => {
+      const trimmed = stdout.trim();
+      finish(code === 0 && /^\d+$/.test(trimmed) ? trimmed : null);
+    });
+
+    proc.on("error", () => {
+      finish(null);
+    });
+
+    const timeoutId = setTimeout(() => {
+      proc.kill();
+      finish(null);
+    }, 3000);
+  });
+}
+
+export function getPrNumber(currentBranch: string | null): string | null {
+  const now = Date.now();
+
+  // If branch changed, invalidate PR cache
+  if (cachedPr && cachedPr.forBranch !== currentBranch) {
+    cachedPr = null;
+  }
+
+  if (cachedPr && now - cachedPr.timestamp < PR_TTL_MS) {
+    return cachedPr.prNumber;
+  }
+
+  if (!pendingPrFetch) {
+    const fetchId = prInvalidationCounter;
+    pendingPrFetch = fetchPrNumber().then((result) => {
+      if (fetchId === prInvalidationCounter) {
+        cachedPr = {
+          prNumber: result,
+          forBranch: currentBranch,
+          timestamp: Date.now(),
+        };
+      }
+      pendingPrFetch = null;
+    });
+  }
+
+  return cachedPr?.prNumber ?? null;
+}
+
+export function invalidateGitPr(): void {
+  cachedPr = null;
+  prInvalidationCounter++;
+}
+
 export function getGitStatus(providerBranch: string | null): GitStatus {
   const now = Date.now();
   const branch = getCurrentBranch(providerBranch);
+  const prNumber = getPrNumber(branch);
 
   if (cachedStatus && now - cachedStatus.timestamp < CACHE_TTL_MS) {
     return { 
-      branch, 
+      branch,
+      prNumber,
       staged: cachedStatus.staged,
       unstaged: cachedStatus.unstaged,
       untracked: cachedStatus.untracked,
@@ -149,14 +231,15 @@ export function getGitStatus(providerBranch: string | null): GitStatus {
 
   if (cachedStatus) {
     return { 
-      branch, 
+      branch,
+      prNumber,
       staged: cachedStatus.staged,
       unstaged: cachedStatus.unstaged,
       untracked: cachedStatus.untracked,
     };
   }
 
-  return { branch, staged: 0, unstaged: 0, untracked: 0 };
+  return { branch, prNumber, staged: 0, unstaged: 0, untracked: 0 };
 }
 
 export function invalidateGitStatus(): void {

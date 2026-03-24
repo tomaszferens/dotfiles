@@ -3,12 +3,8 @@
     "provider",
     "model",
     "thinking",
-    "git",
-    "token_total",
-    "token_in",
-    "token_out",
-    "cache_read",
-    "cache_write"
+    "git-branch",
+    "git-pull-request"
   ],
   "rightSegments": ["context_pct"],
   "icons": {
@@ -17,6 +13,7 @@
     "thinking": "🧠",
     "folder": "📁",
     "git": "⎇",
+    "pullRequest": "⑃",
     "tokens": "⊛",
     "input": "↑",
     "output": "↓",
@@ -32,6 +29,7 @@
     "git": "success",
     "gitDirty": "warning",
     "gitClean": "success",
+    "gitPr": "#b281d6",
     "thinking": "muted",
     "context": "dim",
     "contextWarn": "warning",
@@ -43,12 +41,6 @@
   "segmentOptions": {
     "path": {
       "mode": "basename"
-    },
-    "git": {
-      "showBranch": true,
-      "showStaged": true,
-      "showUnstaged": true,
-      "showUntracked": true
     },
     "context_pct": {
       "showAutoIcon": false
