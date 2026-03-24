@@ -19,3 +19,21 @@ alias claude="claude --dangerously-skip-permissions"
 
 # Personal bin directory.
 export PATH="$HOME/bin:$PATH"
+
+# Dotfiles bare repo.
+alias config='git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+
+CONFIG_TRACKED=(
+  ~/.config/nvim
+  ~/.config/wezterm
+  ~/.config/mcphub
+  ~/.pi/agent
+  ~/bin
+)
+
+configpush() {
+  config add "${CONFIG_TRACKED[@]}" && \
+  config add ~/.zshenv ~/.gitignore && \
+  config commit -m "${1:-dotfiles update}" && \
+  config push origin HEAD
+}

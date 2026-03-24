@@ -5,3 +5,8 @@
 .DS_Store
 
 node_modules
+
+.pi/agent/sessions/
+.pi/agent/.extmgr-cache/
+.pi/agent/.update-check
+.pi/agent/auth.json
