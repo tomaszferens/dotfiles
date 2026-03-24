@@ -284,7 +284,7 @@ return {
       { "<M-f>", false },
       { "<C-n>", "<leader>fE", desc = "Explorer Snacks (cwd)", remap = true },
       {
-        "<M-n>",
+        "<M-b>",
         function()
           vim.cmd("stopinsert")
           local explorers = Snacks.picker.get({ source = "explorer" })

@@ -21,27 +21,11 @@ return {
     })
   end,
   keys = {
-    { "<A-t>", "<cmd>TerminalManagerToggle<cr>", mode = { "n", "t" } },
-    { "<A-m>", "<cmd>TerminalManagerNew<cr>", mode = { "n", "t" } },
+    { "<A-c>", "<cmd>TerminalManagerToggle<cr>", mode = { "n", "t" } },
+    { "<A-n>", "<cmd>TerminalManagerNew<cr>", mode = { "n", "t" } },
     { "<A-x>", "<cmd>TerminalManagerClose<cr>", mode = { "n", "t" } },
     { "<A-[>", "<cmd>TerminalManagerPrev<cr>", mode = { "n", "t" } },
     { "<A-]>", "<cmd>TerminalManagerNext<cr>", mode = { "n", "t" } },
-    {
-      "<c-.>",
-      function()
-        require("utils.ai").toggle()
-      end,
-      desc = "Toggle Terminal",
-      mode = { "n", "t", "i", "x" },
-    },
-    {
-      "<M-c>",
-      function()
-        require("utils.ai").toggle()
-      end,
-      desc = "Toggle Terminal",
-      mode = { "n", "t", "i", "x" },
-    },
     {
       "<M-a>",
       function()
