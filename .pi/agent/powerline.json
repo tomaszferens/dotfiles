@@ -1,7 +1,9 @@
 {
   "leftSegments": [
+    "provider",
     "model",
     "thinking",
+    "git",
     "token_total",
     "token_in",
     "token_out",

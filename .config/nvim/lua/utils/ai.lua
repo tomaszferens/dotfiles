@@ -24,7 +24,7 @@ end
 function M.send(text)
   local chan = get_terminal_chan()
   if not chan then
-    vim.cmd("EssentialTermToggle")
+    vim.cmd("TerminalManagerToggle")
     vim.schedule(function()
       local c = get_terminal_chan()
       if c then
@@ -79,7 +79,7 @@ function M.focus_terminal()
 end
 
 function M.toggle()
-  vim.cmd("EssentialTermToggle")
+  vim.cmd("TerminalManagerToggle")
 end
 
 return M

@@ -1,11 +1,11 @@
 {
-  "lastChangelogVersion": "0.61.1",
+  "lastChangelogVersion": "0.62.0",
   "defaultThinkingLevel": "xhigh",
   "steeringMode": "all",
   "theme": "dark",
   "editorPaddingX": 1,
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.4",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-6",
   "showHardwareCursor": false,
   "packages": [
     "npm:pi-rewind-hook",
@@ -13,7 +13,7 @@
     "npm:@tintinweb/pi-subagents",
     "npm:pi-rewind",
     "npm:pi-extmgr",
-    "npm:pi-vitals"
+    "../local-plugins/pi-better-footer"
   ],
   "hideThinkingBlock": false,
   "powerline": "default"
