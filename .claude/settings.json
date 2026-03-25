@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": ["Bash(find:*)"]
+  },
+  "enabledPlugins": {
+    "figma@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay -v 0.3 /System/Library/Sounds/Purr.aiff"
+          }
+        ]
+      }
+    ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
+}
