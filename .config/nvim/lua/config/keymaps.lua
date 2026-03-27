@@ -6,10 +6,24 @@ local map = LazyVim.safe_keymap_set
 map("n", "<C-d>", "<C-d>zz", { desc = "Scroll and recenter" })
 map("n", "<C-u>", "<C-u>zz", { desc = "Scroll and recenter" })
 
+local function resize_height(delta)
+  local ok, state = pcall(require, "terminal-manager.state")
+  if ok and state.get_by_bufnr(vim.api.nvim_get_current_buf()) then
+    local ok_tm, terminal_manager = pcall(require, "terminal-manager")
+    if ok_tm then
+      terminal_manager.adjust_size(delta)
+      return
+    end
+  end
+
+  local direction = delta > 0 and "+" or "-"
+  vim.cmd(("resize %s%d"):format(direction, math.abs(delta)))
+end
+
 map("n", "<M-,>", "<c-w>5<")
 map("n", "<M-.>", "<c-w>5>")
-map("n", "<M-t>", "<C-W>+")
-map("n", "<M-s>", "<C-W>-")
+map({ "n", "t" }, "<M-t>", function() resize_height(5) end, { desc = "Make terminal/window taller" })
+map({ "n", "t" }, "<M-s>", function() resize_height(-5) end, { desc = "Make terminal/window smaller" })
 map("t", "<C-\\>", "<C-\\><C-n>")
 map("t", "<M-,>", "<Cmd>vertical resize -5<CR>")
 map("t", "<M-.>", "<Cmd>vertical resize +5<CR>")
@@ -21,7 +35,9 @@ map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Navigate to left window" })
 map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Navigate to bottom window" })
 map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Navigate to top window" })
 map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Navigate to right window" })
-map("t", "<C-n>", "<cmd>lua Snacks.explorer()<cr>", { desc = "Explorer Snacks (cwd)" })
+map("t", "<C-n>", function()
+  require("utils.snacks_explorer").toggle()
+end, { desc = "Explorer Snacks (cwd)" })
 
 map(
   "n",

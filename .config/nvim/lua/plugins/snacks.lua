@@ -142,7 +142,7 @@ return {
               end
 
               vim.schedule(function()
-                Snacks.explorer()
+                require("utils.snacks_explorer").open_or_focus()
                 vim.defer_fn(function()
                   require("utils.ai").toggle()
                   -- Focus the first normal buffer window
@@ -282,17 +282,25 @@ return {
       { "<leader>fF", false },
       { "<leader>ff", false },
       { "<M-f>", false },
-      { "<C-n>", "<leader>fE", desc = "Explorer Snacks (cwd)", remap = true },
+      {
+        "<C-n>",
+        function()
+          require("utils.snacks_explorer").toggle()
+        end,
+        desc = "Explorer Snacks (cwd)",
+        mode = { "n", "i" },
+      },
+      {
+        "<leader>fE",
+        function()
+          require("utils.snacks_explorer").toggle()
+        end,
+        desc = "Explorer Snacks (cwd)",
+      },
       {
         "<M-h>",
         function()
-          vim.cmd("stopinsert")
-          local explorers = Snacks.picker.get({ source = "explorer" })
-          if #explorers > 0 then
-            explorers[1]:focus("list")
-          else
-            Snacks.explorer()
-          end
+          require("utils.snacks_explorer").open_or_focus()
         end,
         desc = "Focus Explorer",
         mode = { "n", "i", "t" },

@@ -4,8 +4,9 @@ return {
   dependencies = { "MunifTanjim/nui.nvim" },
   config = function()
     require("terminal-manager").setup({
-      display_mode = "vertical",
-      size = 50,
+      display_mode = "horizontal",
+      size = 35,
+      zindex = 250,
       escape_key = false,
     })
 
@@ -26,6 +27,7 @@ return {
     { "<A-x>", "<cmd>TerminalManagerClose<cr>", mode = { "n", "t" } },
     { "<A-[>", "<cmd>TerminalManagerPrev<cr>", mode = { "n", "t" } },
     { "<A-]>", "<cmd>TerminalManagerNext<cr>", mode = { "n", "t" } },
+    { "<M-l>", "<cmd>TerminalManagerCycleLayout<cr>", mode = { "n", "t" } },
     {
       "<M-a>",
       function()

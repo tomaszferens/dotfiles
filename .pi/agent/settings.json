@@ -1,11 +1,11 @@
 {
-  "lastChangelogVersion": "0.62.0",
+  "lastChangelogVersion": "0.63.1",
   "defaultThinkingLevel": "xhigh",
   "steeringMode": "all",
   "theme": "dark",
   "editorPaddingX": 1,
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-6",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.4",
   "showHardwareCursor": false,
   "packages": [
     "npm:pi-rewind-hook",
@@ -18,4 +18,3 @@
   "hideThinkingBlock": false,
   "powerline": "default"
 }
-
