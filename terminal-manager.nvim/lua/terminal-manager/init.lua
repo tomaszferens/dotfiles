@@ -23,7 +23,7 @@ local function process_name_from_title(title)
 end
 
 ---Initialise terminal-manager with user options. Must be called once before any other API.
----@param opts? {shell?:string, size?:integer, close_on_exit?:boolean, start_in_insert?:boolean, sidebar_width?:integer, display_mode?:"horizontal"|"vertical"|"float", border?:string, escape_key?:string|false, auto_rename?:boolean, colors?:{bg?:string, fg?:string}}
+---@param opts? {shell?:string, size?:integer, close_on_exit?:boolean, start_in_insert?:boolean, sidebar_width?:integer, display_mode?:"horizontal"|"vertical"|"float", border?:string, zindex?:integer, escape_key?:string|false, auto_rename?:boolean, colors?:{bg?:string, fg?:string}}
 function M.setup(opts)
   config.setup(opts)
 
@@ -56,6 +56,7 @@ function M.setup(opts)
     group = vim.api.nvim_create_augroup("TerminalManagerResize", { clear = true }),
     callback = function()
       vim.schedule(function()
+        terminal.ensure_horizontal_layout()
         terminal.resize()
         local active = state.get_active()
         if active and active.winnr and vim.api.nvim_win_is_valid(active.winnr) then
@@ -73,10 +74,18 @@ function M.setup(opts)
     group = vim.api.nvim_create_augroup("TerminalManagerWinResize", { clear = true }),
     callback = function()
       vim.schedule(function()
+        terminal.ensure_horizontal_layout()
+
         local active = state.get_active()
         if active and active.winnr and vim.api.nvim_win_is_valid(active.winnr) then
           ui.reposition_tabline(active.winnr)
         end
+        -- Restore sidebar width after layout changes (e.g. explorer open/close)
+        if ui._sidebar and vim.api.nvim_win_is_valid(ui._sidebar.winid) then
+          local w = (config.options and config.options.sidebar_width) or 22
+          vim.api.nvim_win_set_width(ui._sidebar.winid, w)
+        end
+        ui.refresh()
       end)
     end,
   })
@@ -99,20 +108,74 @@ local function hide_all()
   end
 end
 
-local function maybe_show_sidebar(term)
+local function maybe_show_session_ui(term)
   if not (term and term.winnr and vim.api.nvim_win_is_valid(term.winnr)) then return end
-  local mode = config.options.display_mode
-  if mode == "float" or mode == "vertical" then
-    if state.count() >= 2 then
-      ui.show_tabline(term.winnr)
-    else
-      ui.hide_tabline()
-    end
+
+  local mode = config.options.display_mode or "horizontal"
+
+  ui.hide_sidebar()
+  if mode == "horizontal" or state.count() >= 2 then
+    ui.show_tabline(term.winnr)
+  else
+    ui.hide_tabline()
+  end
+end
+
+---Adjust the configured terminal size by signed percentage points.
+---Hidden sessions keep the new size and will use it next time they are shown.
+---@param delta integer
+function M.adjust_size(delta)
+  delta = tonumber(delta) or 0
+  if delta == 0 then
     return
   end
-  if state.count() >= 2 then
-    ui.show_sidebar(term.winnr)
+
+  local current = tonumber(config.options.size) or config.defaults.size or 70
+  local next_size = math.max(5, math.min(95, current + delta))
+  if next_size == current then
+    return
   end
+
+  config.options.size = next_size
+  terminal.resize()
+
+  local active = state.get_active()
+  if active and active.winnr and vim.api.nvim_win_is_valid(active.winnr) then
+    ui.reposition_tabline(active.winnr)
+  end
+  ui.refresh()
+end
+
+---Cycle the terminal layout between horizontal and vertical.
+---If a terminal is currently visible, it is re-opened in the new layout while
+---preserving the running shell session.
+---@return "horizontal"|"vertical" mode
+function M.cycle_layout()
+  local current_mode = config.options.display_mode or "horizontal"
+  local next_mode = current_mode == "vertical" and "horizontal" or "vertical"
+  config.options.display_mode = next_mode
+
+  if not any_visible() then
+    return next_mode
+  end
+
+  local active = state.get_active()
+  local current_win = vim.api.nvim_get_current_win()
+  local keep_terminal_focus = active and active.winnr and current_win == active.winnr
+  local reopen_id = (active and active.id) or state.active_id or state._terms[1].id
+
+  hide_all()
+  ui.hide_sidebar()
+  ui.hide_tabline()
+
+  terminal.show(reopen_id)
+  maybe_show_session_ui(state.get(reopen_id))
+
+  if not keep_terminal_focus and vim.api.nvim_win_is_valid(current_win) then
+    vim.api.nvim_set_current_win(current_win)
+  end
+
+  return next_mode
 end
 
 ---Show the terminal panel (creating one if needed), or hide all visible terminals.
@@ -130,7 +193,7 @@ function M.toggle()
   else
     local id = state.active_id or state._terms[1].id
     terminal.show(id)
-    maybe_show_sidebar(state.get(id))
+    maybe_show_session_ui(state.get(id))
   end
 end
 
@@ -138,7 +201,7 @@ end
 ---@return table The new session entry from state.
 function M.new()
   local term = terminal.create()
-  maybe_show_sidebar(term)
+  maybe_show_session_ui(term)
   return term
 end
 
@@ -165,7 +228,7 @@ function M.close()
 
   if next_id then
     terminal.show(next_id)
-    maybe_show_sidebar(state.get(next_id))
+    maybe_show_session_ui(state.get(next_id))
   else
     ui.hide_sidebar()
     ui.hide_tabline()
@@ -221,7 +284,7 @@ function M.goto_index(n)
   if term.id == state.active_id then
     if not (term.winnr and vim.api.nvim_win_is_valid(term.winnr)) then
       terminal.show(term.id)
-      maybe_show_sidebar(term)
+      maybe_show_session_ui(term)
     end
     -- Ensure focus goes to the terminal, not the sidebar
     if term.winnr and vim.api.nvim_win_is_valid(term.winnr) then
@@ -237,7 +300,7 @@ function M.goto_index(n)
     terminal.swap_to(term.id)
   else
     terminal.show(term.id)
-    maybe_show_sidebar(state.get(term.id))
+    maybe_show_session_ui(state.get(term.id))
   end
   ui.refresh()
 end

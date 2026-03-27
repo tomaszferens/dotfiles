@@ -15,6 +15,7 @@ cmd("TerminalManagerNew",    function() require("terminal-manager").new() end,  
 cmd("TerminalManagerClose",  function() require("terminal-manager").close() end,  { desc = "Close active terminal session" })
 cmd("TerminalManagerNext",   function() require("terminal-manager").next() end,   { desc = "Go to next terminal session" })
 cmd("TerminalManagerPrev",   function() require("terminal-manager").prev() end,   { desc = "Go to previous terminal session" })
+cmd("TerminalManagerCycleLayout", function() require("terminal-manager").cycle_layout() end, { desc = "Cycle terminal layout" })
 cmd("TerminalManagerRename", function(args)
   require("terminal-manager").rename(args.args ~= "" and args.args or nil)
 end, { nargs = "?", desc = "Rename active terminal session" })

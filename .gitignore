@@ -10,3 +10,5 @@ node_modules
 .pi/agent/.extmgr-cache/
 .pi/agent/.update-check
 .pi/agent/auth.json
+.pi/agent/skills/
+.pi/agent/bin/

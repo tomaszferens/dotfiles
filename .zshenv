@@ -30,6 +30,7 @@ CONFIG_TRACKED=(
   ~/.pi/agent
   ~/.pi/local-plugins
   ~/bin
+  ~/terminal-manager.nvim
 )
 
 configpush() {
