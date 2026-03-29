@@ -200,6 +200,48 @@ config.keys = {
     },
     { mods = mods, key = 'n', action = act.SwitchWorkspaceRelative(1) },
     { mods = mods, key = 'b', action = act.SwitchWorkspaceRelative(-1) },
+    {
+        mods = 'ALT',
+        key = 'a',
+        action = wezterm.action_callback(function(win, pane)
+            -- If this pane is running neovim, pass the key through
+            local process = pane:get_foreground_process_name() or ''
+            local is_nvim = process:match 'nvim$' ~= nil
+
+            if is_nvim then
+                win:perform_action(act.SendKey { mods = 'ALT', key = 'a' }, pane)
+                return
+            end
+
+            -- Bottom pane — query neovim for current file
+            local cmd =
+                '/opt/homebrew/bin/nvim --server /tmp/nvim-wezterm.sock --remote-expr "expand(\'%:.\')" 2>&1'
+            wezterm.log_info('M-a: running: ' .. cmd)
+
+            local handle = io.popen(cmd)
+            if not handle then
+                wezterm.log_info 'M-a: io.popen failed'
+                return
+            end
+            local file_path = handle:read '*a'
+            local ok, exit_type, code = handle:close()
+            wezterm.log_info(
+                ('M-a: result=%q ok=%s exit=%s code=%s'):format(
+                    file_path or 'nil',
+                    tostring(ok),
+                    tostring(exit_type),
+                    tostring(code)
+                )
+            )
+
+            file_path = (file_path or ''):gsub('%s+$', '')
+            if file_path ~= '' and not file_path:match 'E%d+:' then
+                pane:send_text('@' .. file_path .. ' ')
+            else
+                wezterm.log_info('M-a: skipped, bad result: ' .. file_path)
+            end
+        end),
+    },
     { mods = 'ALT', key = '-', action = act.DecreaseFontSize },
     { mods = 'ALT', key = '=', action = act.IncreaseFontSize },
     { mods = 'ALT', key = '0', action = act.ResetFontSize },

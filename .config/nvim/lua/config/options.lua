@@ -17,6 +17,11 @@ vim.opt.diffopt = {
 }
 
 vim.opt.relativenumber = false
+
+-- Start a known server so wezterm can query neovim for current file
+local server_path = "/tmp/nvim-wezterm.sock"
+pcall(vim.fn.delete, server_path)
+pcall(vim.fn.serverstart, server_path)
 vim.g.ai_cmp = false
 
 -- diff line backgrounds

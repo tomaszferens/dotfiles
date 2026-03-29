@@ -1,16 +1,44 @@
 local M = {}
 
-local function get_terminal_chan()
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    local buf = vim.api.nvim_win_get_buf(win)
-    if vim.bo[buf].buftype == "terminal" then
-      local chan = vim.b[buf].terminal_job_id
-      if chan then
-        return chan, win, buf
-      end
-    end
+local WEZTERM = "/opt/homebrew/bin/wezterm"
+
+--- Get the wezterm pane ID in the given direction relative to the current pane.
+---@param direction string "Up"|"Down"|"Left"|"Right"
+---@return number|nil
+local function get_pane_in_direction(direction)
+  local wezterm_pane = vim.env.WEZTERM_PANE
+  local cmd = { WEZTERM, "cli", "get-pane-direction", direction }
+  if wezterm_pane then
+    cmd = { WEZTERM, "cli", "get-pane-direction", "--pane-id", wezterm_pane, direction }
   end
-  return nil
+
+  local result = vim.fn.system(cmd)
+  if vim.v.shell_error ~= 0 or not result or result:match("^%s*$") then
+    return nil
+  end
+  local cleaned = result:gsub("%s+", "")
+  return tonumber(cleaned)
+end
+
+--- Send text to a specific wezterm pane.
+---@param pane_id number
+---@param text string
+local function send_to_pane(pane_id, text)
+  vim.fn.system(
+    { WEZTERM, "cli", "send-text", "--pane-id", tostring(pane_id), "--no-paste" },
+    text
+  )
+end
+
+--- Send text to the bottom wezterm pane.
+---@param text string
+function M.send(text)
+  local pane_id = get_pane_in_direction("Down")
+  if not pane_id then
+    vim.notify("No pane below", vim.log.levels.WARN)
+    return
+  end
+  send_to_pane(pane_id, text)
 end
 
 function M.strip_cwd(p)
@@ -19,21 +47,6 @@ function M.strip_cwd(p)
     return p
   end
   return p:sub(#cwd + 2)
-end
-
-function M.send(text)
-  local chan = get_terminal_chan()
-  if not chan then
-    vim.cmd("TerminalManagerToggle")
-    vim.schedule(function()
-      local c = get_terminal_chan()
-      if c then
-        vim.fn.chansend(c, text)
-      end
-    end)
-    return
-  end
-  vim.fn.chansend(chan, text)
 end
 
 function M.send_file()
@@ -67,19 +80,11 @@ function M.add_path_to_ai_terminal(path)
   M.send("@" .. stripped .. " ")
 end
 
-function M.focus_terminal()
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    local buf = vim.api.nvim_win_get_buf(win)
-    if vim.bo[buf].buftype == "terminal" then
-      vim.api.nvim_set_current_win(win)
-      vim.cmd("startinsert")
-      return
-    end
+function M.focus_bottom_pane()
+  local pane_id = get_pane_in_direction("Down")
+  if pane_id then
+    vim.fn.system({ WEZTERM, "cli", "activate-pane", "--pane-id", tostring(pane_id) })
   end
-end
-
-function M.toggle()
-  vim.cmd("TerminalManagerToggle")
 end
 
 return M
