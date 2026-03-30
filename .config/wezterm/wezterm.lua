@@ -198,6 +198,15 @@ config.keys = {
             )
         end),
     },
+    {
+        mods = mods,
+        key = 'm',
+        action = wezterm.action_callback(function(win, pane)
+            pane:send_text 'nvim\n'
+            local bottom = pane:split { direction = 'Bottom', size = 0.3 }
+            bottom:send_text 'tmux\n'
+        end),
+    },
     { mods = mods, key = 'n', action = act.SwitchWorkspaceRelative(1) },
     { mods = mods, key = 'b', action = act.SwitchWorkspaceRelative(-1) },
     {
