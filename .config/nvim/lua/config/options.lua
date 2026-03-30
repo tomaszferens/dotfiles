@@ -18,8 +18,9 @@ vim.opt.diffopt = {
 
 vim.opt.relativenumber = false
 
--- Start a known server so wezterm can query neovim for current file
-local server_path = "/tmp/nvim-wezterm.sock"
+-- Start a known server so wezterm can query neovim for current file (per-pane)
+local pane_id = vim.env.WEZTERM_PANE or "0"
+local server_path = "/tmp/nvim-wezterm-" .. pane_id .. ".sock"
 pcall(vim.fn.delete, server_path)
 pcall(vim.fn.serverstart, server_path)
 vim.g.ai_cmp = false

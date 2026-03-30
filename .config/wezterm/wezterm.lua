@@ -213,9 +213,28 @@ config.keys = {
                 return
             end
 
-            -- Bottom pane — query neovim for current file
-            local cmd =
-                '/opt/homebrew/bin/nvim --server /tmp/nvim-wezterm.sock --remote-expr "expand(\'%:.\')" 2>&1'
+            -- Find the nvim pane in this tab to use its per-pane socket
+            local nvim_pane_id = nil
+            for _, p in ipairs(win:active_tab():panes()) do
+                local proc = p:get_foreground_process_name() or ''
+                if proc:match 'nvim$' then
+                    nvim_pane_id = p:pane_id()
+                    break
+                end
+            end
+            if not nvim_pane_id then
+                wezterm.log_info 'M-a: no nvim pane found in current tab'
+                return
+            end
+
+            local sock = '/tmp/nvim-wezterm-' .. tostring(nvim_pane_id) .. '.sock'
+            local handle_which = io.popen('/bin/zsh -lc "which nvim" 2>/dev/null')
+            local nvim_bin = handle_which and handle_which:read('*l') or 'nvim'
+            if handle_which then handle_which:close() end
+            local cmd = nvim_bin
+                .. ' --server '
+                .. sock
+                .. ' --remote-expr "expand(\'%:.\')" 2>&1'
             wezterm.log_info('M-a: running: ' .. cmd)
 
             local handle = io.popen(cmd)

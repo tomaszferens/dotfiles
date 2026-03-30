@@ -1,6 +1,6 @@
 local M = {}
 
-local WEZTERM = "/opt/homebrew/bin/wezterm"
+local WEZTERM = vim.fn.exepath("wezterm")
 
 --- Get the wezterm pane ID in the given direction relative to the current pane.
 ---@param direction string "Up"|"Down"|"Left"|"Right"
