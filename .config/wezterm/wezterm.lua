@@ -20,6 +20,9 @@ local colors = {
 config.harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' }
 config.front_end = 'WebGpu'
 
+-- Shift+Click bypasses tmux mouse capture to open URLs.
+config.bypass_mouse_reporting_modifiers = 'SHIFT'
+
 config.color_scheme = 'Tokyo Night'
 config.colors = {
     background = colors.bg,
