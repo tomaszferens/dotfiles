@@ -210,6 +210,26 @@ config.keys = {
             bottom:send_text 'tmux\n'
         end),
     },
+    {
+        mods = mods,
+        key = 'e',
+        action = wezterm.action_callback(function(win, pane)
+            local cwd = pane:get_current_working_dir()
+            local mux_win = win:mux_window()
+            local old_tab = win:active_tab()
+            local old_idx = 0
+            for i, t in ipairs(mux_win:tabs()) do
+                if t:tab_id() == old_tab:tab_id() then
+                    old_idx = i - 1
+                    break
+                end
+            end
+            win:perform_action(act.SpawnCommandInNewTab { cwd = cwd and cwd.file_path or nil }, pane)
+            win:perform_action(act.ActivateTabRelative(-1), pane)
+            win:perform_action(act.CloseCurrentTab { confirm = false }, pane)
+            win:perform_action(act.MoveTab(old_idx), pane)
+        end),
+    },
     { mods = mods, key = 'n', action = act.SwitchWorkspaceRelative(1) },
     { mods = mods, key = 'b', action = act.SwitchWorkspaceRelative(-1) },
     {
