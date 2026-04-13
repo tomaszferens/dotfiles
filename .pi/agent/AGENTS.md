@@ -1,1 +1,0 @@
-/Users/2448386/projects/agent-hub/AGENTS.md

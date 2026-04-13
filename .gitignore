@@ -12,3 +12,4 @@ node_modules
 .pi/agent/auth.json
 .pi/agent/skills/
 .pi/agent/bin/
+.pi/agent/AGENTS.md
