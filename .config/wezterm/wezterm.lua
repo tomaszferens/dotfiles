@@ -293,6 +293,7 @@ config.keys = {
             end
         end),
     },
+    { mods = 'ALT', key = 'f', action = act { ActivatePaneDirection = 'Next' } },
     { mods = 'ALT', key = '-', action = act.DecreaseFontSize },
     { mods = 'ALT', key = '=', action = act.IncreaseFontSize },
     { mods = 'ALT', key = '0', action = act.ResetFontSize },

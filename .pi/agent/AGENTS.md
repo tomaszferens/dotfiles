@@ -1,2 +1,1 @@
-1. Use `fd` instead of `find`
-2. Use ripgrep (`rg`) instead of `grep`
+/Users/2448386/projects/agent-hub/AGENTS.md

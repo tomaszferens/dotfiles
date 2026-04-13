@@ -80,11 +80,5 @@ function M.add_path_to_ai_terminal(path)
   M.send("@" .. stripped .. " ")
 end
 
-function M.focus_bottom_pane()
-  local pane_id = get_pane_in_direction("Down")
-  if pane_id then
-    vim.fn.system({ WEZTERM, "cli", "activate-pane", "--pane-id", tostring(pane_id) })
-  end
-end
 
 return M

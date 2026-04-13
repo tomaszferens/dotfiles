@@ -47,9 +47,6 @@ vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {
 -- Wezterm pane keybindings
 local ai_utils = require("utils.ai")
 
-map({ "n", "i" }, "<M-f>", function()
-  ai_utils.focus_bottom_pane()
-end, { desc = "Focus bottom wezterm pane" })
 
 map("n", "<M-a>", function()
   ai_utils.send_file()
