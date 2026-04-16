@@ -50,11 +50,11 @@ local ai_utils = require("utils.ai")
 
 map("n", "<M-a>", function()
   ai_utils.send_file()
-end, { desc = "Send file path to bottom pane" })
+end, { desc = "Send file path to adjacent pane" })
 
 map({ "x", "v" }, "<M-a>", function()
   ai_utils.send_visual_reference()
-end, { desc = "Send file+lines to bottom pane" })
+end, { desc = "Send file+lines to adjacent pane" })
 
 map("n", "<leader>af", function()
   ai_utils.send_file()

@@ -294,6 +294,40 @@ config.keys = {
         end),
     },
     { mods = 'ALT', key = 'f', action = act { ActivatePaneDirection = 'Next' } },
+    {
+        mods = 'ALT',
+        key = 'c',
+        action = wezterm.action_callback(function(win, pane)
+            local panes = win:active_tab():panes_with_info()
+            if #panes ~= 2 then
+                return
+            end
+            local active, other
+            for _, p in ipairs(panes) do
+                if p.is_active then
+                    active = p
+                else
+                    other = p
+                end
+            end
+            if not active or not other then
+                return
+            end
+
+            local direction = active.left ~= other.left and '--bottom' or '--right'
+
+            wezterm.background_child_process {
+                wezterm.executable_dir .. '/wezterm',
+                'cli',
+                'split-pane',
+                '--pane-id',
+                tostring(other.pane:pane_id()),
+                direction,
+                '--move-pane-id',
+                tostring(active.pane:pane_id()),
+            }
+        end),
+    },
     { mods = 'ALT', key = '-', action = act.DecreaseFontSize },
     { mods = 'ALT', key = '=', action = act.IncreaseFontSize },
     { mods = 'ALT', key = '0', action = act.ResetFontSize },

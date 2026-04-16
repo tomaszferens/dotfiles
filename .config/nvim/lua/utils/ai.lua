@@ -30,12 +30,15 @@ local function send_to_pane(pane_id, text)
   )
 end
 
---- Send text to the bottom wezterm pane.
+--- Send text to an adjacent wezterm pane (Down, Right, Left, or Up).
 ---@param text string
 function M.send(text)
   local pane_id = get_pane_in_direction("Down")
+    or get_pane_in_direction("Right")
+    or get_pane_in_direction("Left")
+    or get_pane_in_direction("Up")
   if not pane_id then
-    vim.notify("No pane below", vim.log.levels.WARN)
+    vim.notify("No adjacent pane", vim.log.levels.WARN)
     return
   end
   send_to_pane(pane_id, text)
