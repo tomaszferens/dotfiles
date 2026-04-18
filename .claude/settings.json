@@ -1,12 +1,13 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "permissions": {
-    "allow": ["Bash(find:*)"]
+    "allow": [
+      "Bash(find:*)"
+    ]
   },
-  "enabledPlugins": {
-    "figma@claude-plugins-official": true,
-    "lua-lsp@claude-plugins-official": true
-  },
-  "skipDangerousModePermissionPrompt": true,
   "hooks": {
     "Stop": [
       {
@@ -20,8 +21,10 @@
       }
     ]
   },
-  "attribution": {
-    "commit": "",
-    "pr": ""
-  }
+  "enabledPlugins": {
+    "figma@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "xhigh"
 }
