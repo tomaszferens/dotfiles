@@ -263,6 +263,125 @@ return {
       end, { buffer = buf, desc = "Open file and close diff" })
     end
 
+    local function find_codediff_hunk(session, current_buf, current_line)
+      local diff_result = session and session.stored_diff_result
+      if not diff_result or not diff_result.changes then
+        return nil
+      end
+
+      local is_original = session.layout ~= "inline" and current_buf == session.original_bufnr
+      for _, hunk in ipairs(diff_result.changes) do
+        local range = is_original and hunk.original or hunk.modified
+        if current_line >= range.start_line and current_line < range.end_line then
+          return hunk
+        end
+        if range.start_line == range.end_line and current_line == range.start_line then
+          return hunk
+        end
+      end
+
+      return nil
+    end
+
+    local function normalize_codediff_path(path)
+      if type(path) ~= "string" or path == "" then
+        return nil
+      end
+
+      if path:sub(1, 1) == "/" then
+        return require("utils.ai").strip_cwd(path)
+      end
+
+      return path
+    end
+
+    local function build_hunk_reference(session, hunk)
+      local range = hunk.modified
+      local path = normalize_codediff_path(session.modified_path)
+
+      -- Deletion-only hunks have no modified lines to reference, so point at the
+      -- original side instead.
+      if range.start_line >= range.end_line then
+        range = hunk.original
+        path = normalize_codediff_path(session.original_path) or path
+      end
+
+      if not path then
+        return nil
+      end
+
+      local start_line = math.max(range.start_line, 1)
+      local end_line = math.max(range.end_line - 1, start_line)
+      if start_line == end_line then
+        return string.format("@%s#L%d", path, start_line)
+      end
+
+      return string.format("@%s#L%d-L%d", path, start_line, end_line)
+    end
+
+    local function prompt_ai_with_hunk_reference(diff_tab)
+      local lifecycle = require("codediff.ui.lifecycle")
+      local session = lifecycle.get_session(diff_tab)
+      if vim.api.nvim_get_current_tabpage() ~= diff_tab or not session then
+        require("utils.ai").send_file()
+        return
+      end
+
+      local current_buf = vim.api.nvim_get_current_buf()
+      if current_buf ~= session.original_bufnr and current_buf ~= session.modified_bufnr then
+        require("utils.ai").send_file()
+        return
+      end
+
+      local current_line = vim.api.nvim_win_get_cursor(0)[1]
+      local hunk = find_codediff_hunk(session, current_buf, current_line)
+      if not hunk then
+        vim.notify("No CodeDiff hunk at cursor", vim.log.levels.WARN)
+        return
+      end
+
+      local reference = build_hunk_reference(session, hunk)
+      if not reference then
+        vim.notify("No file path available for this CodeDiff hunk", vim.log.levels.WARN)
+        return
+      end
+
+      vim.ui.input({ prompt = reference .. " prompt: " }, function(input)
+        if input == nil then
+          return
+        end
+
+        local text = vim.trim(input)
+        if text == "" then
+          text = reference
+        else
+          text = reference .. " " .. text
+        end
+
+        require("utils.ai").send(text .. " ")
+      end)
+    end
+
+    local function set_ai_hunk_keymap(buf, diff_tab)
+      if vim.b[buf].codediff_ai_hunk_tab == diff_tab then
+        return
+      end
+
+      vim.b[buf].codediff_ai_hunk_tab = diff_tab
+      vim.keymap.set("n", "<M-a>", function()
+        prompt_ai_with_hunk_reference(diff_tab)
+      end, { buffer = buf, desc = "Prompt AI with CodeDiff hunk" })
+    end
+
+    local function set_codediff_buffer_keymaps(buf, diff_tab)
+      set_gf_keymap(buf, diff_tab)
+
+      local session = lifecycle.get_session(diff_tab)
+      if session and (buf == session.original_bufnr or buf == session.modified_bufnr) then
+        set_ai_hunk_keymap(buf, diff_tab)
+      end
+    end
+
     local gf_augroup = vim.api.nvim_create_augroup("CodeDiffGf", { clear = true })
 
     vim.api.nvim_create_autocmd("User", {
@@ -270,14 +389,14 @@ return {
       callback = function()
         local diff_tab = vim.api.nvim_get_current_tabpage()
         for _, win in ipairs(vim.api.nvim_tabpage_list_wins(diff_tab)) do
-          set_gf_keymap(vim.api.nvim_win_get_buf(win), diff_tab)
+          set_codediff_buffer_keymaps(vim.api.nvim_win_get_buf(win), diff_tab)
         end
 
         vim.api.nvim_create_autocmd("BufEnter", {
           group = gf_augroup,
           callback = function()
             if vim.api.nvim_get_current_tabpage() == diff_tab then
-              set_gf_keymap(vim.api.nvim_get_current_buf(), diff_tab)
+              set_codediff_buffer_keymaps(vim.api.nvim_get_current_buf(), diff_tab)
             end
           end,
         })

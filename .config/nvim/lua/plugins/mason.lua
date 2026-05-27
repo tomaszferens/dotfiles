@@ -6,7 +6,7 @@ return {
       "pyright",
       "prettierd",
       "tailwindcss-language-server",
-      "vtsls",
+      "tsgo",
       "eslint_d",
       "eslint-lsp",
       "ruff",

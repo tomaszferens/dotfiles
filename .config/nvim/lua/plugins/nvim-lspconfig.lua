@@ -6,18 +6,29 @@ return {
       inlay_hints = { enabled = false },
       ---@type lspconfig.options
       servers = {
+        vtsls = { enabled = false },
+        tsgo = {
+          cmd = function(dispatchers, config)
+            local bin = "tsgo"
+            if config and config.root_dir then
+              for _, p in ipairs({
+                vim.fs.joinpath(config.root_dir, "node_modules/.bin", bin),
+                vim.fs.joinpath(config.root_dir, "node_modules/.pnpm/node_modules/.bin", bin),
+              }) do
+                if vim.fn.executable(p) == 1 then
+                  bin = p
+                  break
+                end
+              end
+            end
+            return vim.lsp.rpc.start({ bin, "--lsp", "--stdio" }, dispatchers)
+          end,
+        },
         eslint = {
           settings = {
             workingDirectory = { mode = "auto" },
           },
         },
-      },
-      setup = {
-        vtsls = function()
-          Snacks.util.lsp.on({ name = "vtsls" }, function(_buf, client)
-            client.server_capabilities.documentFormattingProvider = false
-          end)
-        end,
       },
     },
   },

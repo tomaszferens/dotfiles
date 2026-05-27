@@ -1,20 +1,19 @@
 {
-  "lastChangelogVersion": "0.63.1",
+  "lastChangelogVersion": "0.76.0",
   "defaultThinkingLevel": "xhigh",
   "steeringMode": "all",
   "theme": "dark",
   "editorPaddingX": 1,
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.4",
+  "defaultModel": "gpt-5.5",
   "showHardwareCursor": false,
   "packages": [
-    "npm:pi-rewind-hook",
     "npm:pi-web-access",
     "npm:@tintinweb/pi-subagents",
     "npm:pi-rewind",
-    "npm:pi-extmgr",
-    "../local-plugins/pi-better-footer"
+    "npm:@ff-labs/pi-fff"
   ],
   "hideThinkingBlock": false,
   "powerline": "default"
 }
+

@@ -24,6 +24,7 @@ local server_path = "/tmp/nvim-wezterm-" .. pane_id .. ".sock"
 pcall(vim.fn.delete, server_path)
 pcall(vim.fn.serverstart, server_path)
 vim.g.ai_cmp = false
+vim.g.lazyvim_ts_lsp = "tsgo"
 
 -- diff line backgrounds
 vim.api.nvim_set_hl(0, "DiffAdd", { bg = "#34462F" })
