@@ -151,6 +151,125 @@ local function pane_navigation_action(direction, fallback_direction)
         win:perform_action({ ActivatePaneDirection = pane_direction }, pane)
     end)
 end
+
+local coding_agents = {
+    { name = 'pi', aliases = { 'pi', 'π' } },
+    { name = 'claude', aliases = { 'claude' } },
+    { name = 'codex', aliases = { 'codex' } },
+    { name = 'opencode', aliases = { 'opencode' } },
+}
+
+local function escape_pattern(s)
+    return (s:gsub('([^%w])', '%%%1'))
+end
+
+local function basename(path)
+    return (path or ''):gsub('\\', '/'):match '([^/]+)$' or ''
+end
+
+local function text_has_agent(text, aliases)
+    local raw = text or ''
+    local lower = raw:lower()
+
+    for _, alias in ipairs(aliases) do
+        if alias == 'π' then
+            if raw:find(alias, 1, true) then
+                return true
+            end
+        elseif lower:match('%f[%w]' .. escape_pattern(alias:lower()) .. '%f[%W]') then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function pane_title(pane)
+    local ok, title = pcall(function()
+        return pane:get_title()
+    end)
+
+    if ok and title then
+        return title
+    end
+
+    return ''
+end
+
+local function pane_process_info_text(pane)
+    local parts = {
+        pane:get_foreground_process_name() or '',
+        pane_title(pane),
+    }
+
+    local ok, info = pcall(function()
+        return pane:get_foreground_process_info()
+    end)
+
+    if ok and type(info) == 'table' then
+        table.insert(parts, info.name or '')
+        table.insert(parts, info.executable or '')
+        if type(info.argv) == 'table' then
+            table.insert(parts, table.concat(info.argv, ' '))
+        elseif info.argv then
+            table.insert(parts, tostring(info.argv))
+        end
+    end
+
+    return table.concat(parts, ' ')
+end
+
+local function is_coding_agent_pane(pane)
+    local text = pane_process_info_text(pane)
+    local process = basename(pane:get_foreground_process_name() or '')
+
+    for _, agent in ipairs(coding_agents) do
+        if text_has_agent(process, agent.aliases) or text_has_agent(text, agent.aliases) then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function is_nvim_pane(pane)
+    return basename(pane:get_foreground_process_name() or '') == 'nvim'
+end
+
+local function find_nvim_pane_in_tab(tab)
+    for _, p in ipairs(tab:panes()) do
+        if is_nvim_pane(p) then
+            return p
+        end
+    end
+
+    return nil
+end
+
+local function find_nvim_pane(win, include_other_tabs)
+    local active_tab = win:active_tab()
+    local nvim_pane = find_nvim_pane_in_tab(active_tab)
+    if nvim_pane then
+        return nvim_pane
+    end
+
+    if not include_other_tabs then
+        return nil
+    end
+
+    local active_tab_id = active_tab:tab_id()
+    for _, tab in ipairs(win:mux_window():tabs()) do
+        if tab:tab_id() ~= active_tab_id then
+            nvim_pane = find_nvim_pane_in_tab(tab)
+            if nvim_pane then
+                return nvim_pane
+            end
+        end
+    end
+
+    return nil
+end
+
 local mods = 'ALT|SHIFT'
 config.keys = {
     { mods = mods, key = 'x', action = act.ActivateCopyMode },
@@ -236,29 +355,28 @@ config.keys = {
         mods = 'ALT',
         key = 'a',
         action = wezterm.action_callback(function(win, pane)
-            -- If this pane is running neovim, pass the key through
-            local process = pane:get_foreground_process_name() or ''
-            local is_nvim = process:match 'nvim$' ~= nil
-
-            if is_nvim then
+            -- If this pane is running neovim, pass the key through. Neovim will
+            -- send the path to an adjacent pane, then fall back to an agent tab.
+            if is_nvim_pane(pane) then
                 win:perform_action(act.SendKey { mods = 'ALT', key = 'a' }, pane)
                 return
             end
 
-            -- Find the nvim pane in this tab to use its per-pane socket
-            local nvim_pane_id = nil
-            for _, p in ipairs(win:active_tab():panes()) do
-                local proc = p:get_foreground_process_name() or ''
-                if proc:match 'nvim$' then
-                    nvim_pane_id = p:pane_id()
-                    break
-                end
+            -- Preserve the old same-tab behavior for any non-nvim pane.
+            local nvim_pane = find_nvim_pane(win, false)
+
+            -- If there is no nvim pane in this tab, only coding-agent panes are
+            -- allowed to pull the file path from another tab.
+            if not nvim_pane and is_coding_agent_pane(pane) then
+                nvim_pane = find_nvim_pane(win, true)
             end
-            if not nvim_pane_id then
-                wezterm.log_info 'M-a: no nvim pane found in current tab'
+
+            if not nvim_pane then
+                wezterm.log_info 'M-a: no nvim pane found'
                 return
             end
 
+            local nvim_pane_id = nvim_pane:pane_id()
             local sock = '/tmp/nvim-wezterm-' .. tostring(nvim_pane_id) .. '.sock'
             local handle_which = io.popen('/bin/zsh -lc "which nvim" 2>/dev/null')
             local nvim_bin = handle_which and handle_which:read('*l') or 'nvim'
@@ -293,6 +411,8 @@ config.keys = {
             end
         end),
     },
+    -- Ensure Option-b reaches Neovim as <M-b> on macOS instead of a composed character.
+    { mods = 'ALT', key = 'b', action = act.SendKey { mods = 'ALT', key = 'b' } },
     { mods = 'ALT', key = 'f', action = act { ActivatePaneDirection = 'Next' } },
     {
         mods = 'ALT',

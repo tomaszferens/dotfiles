@@ -27,7 +27,11 @@ CONFIG_TRACKED=(
   ~/.config/nvim
   ~/.config/wezterm
   ~/.config/mcphub
-  ~/.pi/agent
+  ~/.pi/agent/extensions
+  ~/.pi/agent/git/.gitignore
+  ~/.pi/agent/npm/.gitignore
+  ~/.pi/agent/powerline.json
+  ~/.pi/agent/settings.json
   ~/.pi/local-plugins
   ~/bin
   ~/terminal-manager.nvim
@@ -39,3 +43,6 @@ configpush() {
   config commit -m "${1:-dotfiles update}" && \
   config push origin HEAD
 }
+
+# pi-fff: always replace built-in grep/find with FFF
+export PI_FFF_MODE=override

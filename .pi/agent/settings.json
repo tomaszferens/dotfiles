@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.76.0",
+  "lastChangelogVersion": "0.79.10",
   "defaultThinkingLevel": "xhigh",
   "steeringMode": "all",
   "theme": "dark",
@@ -9,11 +9,12 @@
   "showHardwareCursor": false,
   "packages": [
     "npm:pi-web-access",
-    "npm:@tintinweb/pi-subagents",
     "npm:pi-rewind",
-    "npm:@ff-labs/pi-fff"
+    "npm:@ff-labs/pi-fff",
+    "npm:@plannotator/pi-extension",
+    "npm:context-mode",
+    "npm:pi-mcp-adapter"
   ],
   "hideThinkingBlock": false,
   "powerline": "default"
 }
-

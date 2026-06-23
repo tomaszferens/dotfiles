@@ -9,7 +9,11 @@ node_modules
 .pi/agent/sessions/
 .pi/agent/.extmgr-cache/
 .pi/agent/.update-check
-.pi/agent/auth.json
+.pi/agent/auth.json*
+.pi/agent/mcp-cache.json
+.pi/agent/mcp-oauth/
+.pi/agent/mcp-onboarding.json
+.pi/agent/trust.json
 .pi/agent/skills/
 .pi/agent/bin/
 .pi/agent/AGENTS.md

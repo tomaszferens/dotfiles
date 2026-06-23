@@ -47,14 +47,21 @@ vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {
 -- Wezterm pane keybindings
 local ai_utils = require("utils.ai")
 
-
 map("n", "<M-a>", function()
   ai_utils.send_file()
-end, { desc = "Send file path to adjacent pane" })
+end, { desc = "Send file path to adjacent pane/agent tab" })
 
 map({ "x", "v" }, "<M-a>", function()
   ai_utils.send_visual_reference()
-end, { desc = "Send file+lines to adjacent pane" })
+end, { desc = "Send file+lines to adjacent pane/agent tab" })
+
+map("n", "<M-b>", function()
+  ai_utils.send_file_with_prompt()
+end, { desc = "Prompt AI with file path" })
+
+map({ "x", "v" }, "<M-b>", function()
+  ai_utils.send_visual_reference_with_prompt()
+end, { desc = "Prompt AI with file+lines" })
 
 map("n", "<leader>af", function()
   ai_utils.send_file()

@@ -103,10 +103,22 @@ local function smart_add_action(picker)
   end
 end
 
+local function smart_prompt_action(picker)
+  if picker.init_opts.source == "explorer" then
+    local selected = picker:current()
+    if selected and selected.file then
+      ai_utils.add_path_to_ai_terminal_with_prompt(selected.file)
+    end
+  else
+    copy_results_to_clipboard(picker)
+  end
+end
+
 local picker_actions = {
   calculate_file_truncate_width = calculate_file_truncate_width,
   copy_results_to_clipboard = copy_results_to_clipboard,
   smart_add_action = smart_add_action,
+  smart_prompt_action = smart_prompt_action,
 }
 
 return {
@@ -237,6 +249,7 @@ return {
                 end
               end,
               smart_add_action = smart_add_action,
+              smart_prompt_action = smart_prompt_action,
             },
           },
         },
@@ -256,12 +269,14 @@ return {
               ["T"] = { { "tab" }, mode = { "n", "i" } },
               ["Y"] = { "copy_rel_cwd" },
               ["<M-a>"] = { "smart_add_action" },
+              ["<M-b>"] = { "smart_prompt_action" },
             },
           },
           input = {
             keys = {
               ["<C-Tab>"] = { { "tab" }, mode = { "n", "i" } },
               ["<M-a>"] = { { "smart_add_action" }, mode = { "n", "i" } },
+              ["<M-b>"] = { { "smart_prompt_action" }, mode = { "n", "i" } },
             },
           },
         },

@@ -3,7 +3,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 export default function (pi: ExtensionAPI) {
   pi.registerProvider("openrouter", {
     baseUrl: "https://openrouter.ai/api/v1",
-    apiKey: "OPENROUTER_API_KEY", // env var name
+    apiKey: "$OPENROUTER_API_KEY", // env var reference
     authHeader: true, // adds Authorization: Bearer header
     api: "openai-completions",
     models: [
