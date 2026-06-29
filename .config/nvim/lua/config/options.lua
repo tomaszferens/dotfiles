@@ -18,8 +18,11 @@ vim.opt.diffopt = {
 
 vim.opt.relativenumber = false
 
--- Start a known server so wezterm can query neovim for current file (per-pane)
-local pane_id = vim.env.WEZTERM_PANE or "0"
+-- Start a known server so wezterm/tmux can query neovim for current file (per-pane).
+-- In tmux, WEZTERM_PANE is the outer terminal pane and is shared by all tmux
+-- panes, so prefer TMUX_PANE to avoid socket collisions.
+local pane_id = vim.env.TMUX_PANE or vim.env.WEZTERM_PANE or "0"
+pane_id = pane_id:gsub("[^%w_.-]", "_")
 local server_path = "/tmp/nvim-wezterm-" .. pane_id .. ".sock"
 pcall(vim.fn.delete, server_path)
 pcall(vim.fn.serverstart, server_path)

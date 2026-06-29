@@ -236,6 +236,10 @@ local function is_nvim_pane(pane)
     return basename(pane:get_foreground_process_name() or '') == 'nvim'
 end
 
+local function is_tmux_pane(pane)
+    return basename(pane:get_foreground_process_name() or '') == 'tmux'
+end
+
 local function find_nvim_pane_in_tab(tab)
     for _, p in ipairs(tab:panes()) do
         if is_nvim_pane(p) then
@@ -268,6 +272,94 @@ local function find_nvim_pane(win, include_other_tabs)
     end
 
     return nil
+end
+
+local function shell_quote(s)
+    return "'" .. tostring(s):gsub("'", "'\\''") .. "'"
+end
+
+local function reference_from_direct_nvim_pane(nvim_pane)
+    local nvim_pane_id = nvim_pane:pane_id()
+    local sock = '/tmp/nvim-wezterm-' .. tostring(nvim_pane_id) .. '.sock'
+    local handle_which = io.popen('/bin/zsh -lc "which nvim" 2>/dev/null')
+    local nvim_bin = handle_which and handle_which:read('*l') or 'nvim'
+    if handle_which then handle_which:close() end
+    local cmd = shell_quote(nvim_bin)
+        .. ' --server '
+        .. shell_quote(sock)
+        .. ' --remote-expr "expand(\'%:.\')" 2>&1'
+    wezterm.log_info('nvim reference: running: ' .. cmd)
+
+    local handle = io.popen(cmd)
+    if not handle then
+        wezterm.log_info 'nvim reference: io.popen failed'
+        return nil
+    end
+    local file_path = handle:read '*a'
+    local ok, exit_type, code = handle:close()
+    wezterm.log_info(
+        ('nvim reference: result=%q ok=%s exit=%s code=%s'):format(
+            file_path or 'nil',
+            tostring(ok),
+            tostring(exit_type),
+            tostring(code)
+        )
+    )
+
+    file_path = (file_path or ''):gsub('%s+$', '')
+    if file_path ~= '' and not file_path:match 'E%d+:' then
+        return '@' .. file_path
+    end
+
+    return nil
+end
+
+local function reference_from_nvim_helper()
+    local home = os.getenv 'HOME'
+    if not home then
+        return nil
+    end
+
+    local script = home .. '/.config/tmux/nvim-ai-reference.sh'
+    local cmd = '/bin/bash ' .. shell_quote(script) .. ' --print-ref 2>/dev/null'
+    wezterm.log_info('nvim reference helper: running: ' .. cmd)
+
+    local handle = io.popen(cmd)
+    if not handle then
+        wezterm.log_info 'nvim reference helper: io.popen failed'
+        return nil
+    end
+
+    local reference = handle:read '*a'
+    handle:close()
+    reference = (reference or ''):gsub('%s+$', '')
+
+    if reference:match '^@.+' then
+        return reference
+    end
+
+    wezterm.log_info('nvim reference helper: skipped, bad result: ' .. reference)
+    return nil
+end
+
+local function current_nvim_reference(win, pane)
+    local nvim_pane = find_nvim_pane(win, false)
+
+    -- If there is no direct nvim pane in this tab, only coding-agent panes are
+    -- allowed to pull from another direct nvim tab.  The helper below also
+    -- covers nvim inside tmux, including tmux in another WezTerm tab.
+    if not nvim_pane and is_coding_agent_pane(pane) then
+        nvim_pane = find_nvim_pane(win, true)
+    end
+
+    if nvim_pane then
+        local reference = reference_from_direct_nvim_pane(nvim_pane)
+        if reference then
+            return reference
+        end
+    end
+
+    return reference_from_nvim_helper()
 end
 
 local mods = 'ALT|SHIFT'
@@ -355,64 +447,57 @@ config.keys = {
         mods = 'ALT',
         key = 'a',
         action = wezterm.action_callback(function(win, pane)
-            -- If this pane is running neovim, pass the key through. Neovim will
-            -- send the path to an adjacent pane, then fall back to an agent tab.
-            if is_nvim_pane(pane) then
+            -- If this pane is running neovim or tmux, pass the key through. Neovim
+            -- handles <M-a> directly; inside tmux, tmux/Neovim must receive the
+            -- Option-a sequence instead of WezTerm swallowing it.
+            if is_nvim_pane(pane) or is_tmux_pane(pane) then
                 win:perform_action(act.SendKey { mods = 'ALT', key = 'a' }, pane)
                 return
             end
 
-            -- Preserve the old same-tab behavior for any non-nvim pane.
-            local nvim_pane = find_nvim_pane(win, false)
-
-            -- If there is no nvim pane in this tab, only coding-agent panes are
-            -- allowed to pull the file path from another tab.
-            if not nvim_pane and is_coding_agent_pane(pane) then
-                nvim_pane = find_nvim_pane(win, true)
-            end
-
-            if not nvim_pane then
-                wezterm.log_info 'M-a: no nvim pane found'
-                return
-            end
-
-            local nvim_pane_id = nvim_pane:pane_id()
-            local sock = '/tmp/nvim-wezterm-' .. tostring(nvim_pane_id) .. '.sock'
-            local handle_which = io.popen('/bin/zsh -lc "which nvim" 2>/dev/null')
-            local nvim_bin = handle_which and handle_which:read('*l') or 'nvim'
-            if handle_which then handle_which:close() end
-            local cmd = nvim_bin
-                .. ' --server '
-                .. sock
-                .. ' --remote-expr "expand(\'%:.\')" 2>&1'
-            wezterm.log_info('M-a: running: ' .. cmd)
-
-            local handle = io.popen(cmd)
-            if not handle then
-                wezterm.log_info 'M-a: io.popen failed'
-                return
-            end
-            local file_path = handle:read '*a'
-            local ok, exit_type, code = handle:close()
-            wezterm.log_info(
-                ('M-a: result=%q ok=%s exit=%s code=%s'):format(
-                    file_path or 'nil',
-                    tostring(ok),
-                    tostring(exit_type),
-                    tostring(code)
-                )
-            )
-
-            file_path = (file_path or ''):gsub('%s+$', '')
-            if file_path ~= '' and not file_path:match 'E%d+:' then
-                pane:send_text('@' .. file_path .. ' ')
+            local reference = current_nvim_reference(win, pane)
+            if reference then
+                pane:send_text(reference .. ' ')
             else
-                wezterm.log_info('M-a: skipped, bad result: ' .. file_path)
+                wezterm.log_info 'M-a: no reachable nvim reference found'
             end
         end),
     },
-    -- Ensure Option-b reaches Neovim as <M-b> on macOS instead of a composed character.
-    { mods = 'ALT', key = 'b', action = act.SendKey { mods = 'ALT', key = 'b' } },
+    {
+        mods = 'ALT',
+        key = 'b',
+        action = wezterm.action_callback(function(win, pane)
+            -- Neovim and tmux own <M-b>; tmux will prompt/send via ~/.tmux.conf.
+            if is_nvim_pane(pane) or is_tmux_pane(pane) then
+                win:perform_action(act.SendKey { mods = 'ALT', key = 'b' }, pane)
+                return
+            end
+
+            local reference = current_nvim_reference(win, pane)
+            if not reference then
+                wezterm.log_info 'M-b: no reachable nvim reference found'
+                return
+            end
+
+            win:perform_action(
+                act.PromptInputLine {
+                    description = 'Prompt AI with current file',
+                    action = wezterm.action_callback(function(_, _, line)
+                        if line == nil then
+                            return
+                        end
+
+                        if line == '' then
+                            pane:send_text(reference .. ' ')
+                        else
+                            pane:send_text(reference .. ' - ' .. line .. '\n')
+                        end
+                    end),
+                },
+                pane
+            )
+        end),
+    },
     { mods = 'ALT', key = 'f', action = act { ActivatePaneDirection = 'Next' } },
     {
         mods = 'ALT',

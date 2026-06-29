@@ -44,16 +44,16 @@ vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {
   silent = true,
 })
 
--- Wezterm pane keybindings
+-- WezTerm/tmux pane keybindings
 local ai_utils = require("utils.ai")
 
 map("n", "<M-a>", function()
   ai_utils.send_file()
-end, { desc = "Send file path to adjacent pane/agent tab" })
+end, { desc = "Send file path to adjacent tmux/wezterm pane or agent" })
 
 map({ "x", "v" }, "<M-a>", function()
   ai_utils.send_visual_reference()
-end, { desc = "Send file+lines to adjacent pane/agent tab" })
+end, { desc = "Send file+lines to adjacent tmux/wezterm pane or agent" })
 
 map("n", "<M-b>", function()
   ai_utils.send_file_with_prompt()

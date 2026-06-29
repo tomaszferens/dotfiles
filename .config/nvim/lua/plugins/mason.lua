@@ -7,7 +7,6 @@ return {
       "prettierd",
       "tailwindcss-language-server",
       "tsgo",
-      "eslint_d",
       "eslint-lsp",
       "ruff",
       "shfmt",

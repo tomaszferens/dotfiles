@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.79.10",
+  "lastChangelogVersion": "0.80.2",
   "defaultThinkingLevel": "xhigh",
   "steeringMode": "all",
   "theme": "dark",
@@ -13,7 +13,8 @@
     "npm:@ff-labs/pi-fff",
     "npm:@plannotator/pi-extension",
     "npm:context-mode",
-    "npm:pi-mcp-adapter"
+    "npm:pi-mcp-adapter",
+    "npm:@hypabolic/pi-hypa"
   ],
   "hideThinkingBlock": false,
   "powerline": "default"
