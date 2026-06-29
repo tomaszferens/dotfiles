@@ -16,12 +16,12 @@ return {
       opts.servers.eslint.settings.workingDirectory = opts.servers.eslint.settings.workingDirectory or { mode = "auto" }
       opts.servers.eslint.settings.workingDirectories = nil
 
-      opts.servers["*"] = vim.tbl_deep_extend("force", opts.servers["*"] or {}, {
-        keys = {
-          { "<leader>cc", false },
-          { "<leader>ca", false },
-          { "<M-n>", false },
-        },
+      opts.servers["*"] = opts.servers["*"] or {}
+      opts.servers["*"].keys = opts.servers["*"].keys or {}
+      vim.list_extend(opts.servers["*"].keys, {
+        { "<leader>cc", false },
+        { "<leader>ca", false },
+        { "<M-n>", false },
       })
 
       local on_publish_diagnostics = vim.lsp.diagnostic.on_publish_diagnostics

@@ -28,6 +28,9 @@ pcall(vim.fn.delete, server_path)
 pcall(vim.fn.serverstart, server_path)
 vim.g.ai_cmp = false
 vim.g.lazyvim_ts_lsp = "tsgo"
+-- Use an explicit synchronous source.fixAll.eslint autocmd instead of ESLint's
+-- formatting provider, so fixes are applied before the file is written.
+vim.g.lazyvim_eslint_auto_format = false
 
 -- diff line backgrounds
 vim.api.nvim_set_hl(0, "DiffAdd", { bg = "#34462F" })
