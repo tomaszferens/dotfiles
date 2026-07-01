@@ -479,12 +479,40 @@ function M.send(text)
   return send_to_pane(pane_id, text)
 end
 
+local function strip_codediff_url(p)
+  if type(p) ~= "string" then
+    return nil
+  end
+
+  -- CodeDiff virtual buffers use:
+  -- codediff:///<git-root>///<revision>/<repo-relative-path>
+  -- For AI references we want only the repo-relative path, not the virtual URI.
+  local _root, _revision, rel = p:match("^codediff:///(.-)///([^/]+)/(.+)$")
+  return rel
+end
+
 function M.strip_cwd(p)
-  local cwd = vim.fn.getcwd()
-  if not p:find(cwd, 1, true) then
+  if type(p) ~= "string" or p == "" then
     return p
   end
-  return p:sub(#cwd + 2)
+
+  local codediff_rel = strip_codediff_url(p)
+  if codediff_rel then
+    return codediff_rel
+  end
+
+  local cwd = vim.fn.getcwd():gsub("[/\\]$", "")
+  local normalized = p:gsub("\\", "/")
+
+  if normalized == cwd then
+    return ""
+  end
+
+  if normalized:sub(1, #cwd + 1) == cwd .. "/" then
+    return normalized:sub(#cwd + 2)
+  end
+
+  return p
 end
 
 function M.path_reference(path)

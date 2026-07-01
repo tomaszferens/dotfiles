@@ -1,6 +1,6 @@
 return {
   "esmuellert/codediff.nvim",
-  cmd = "CodeDiff",
+  cmd = { "CodeDiff", "CodeDiffPiLastTurn", "CodeDiffPiMessages" },
   keys = {
     { "<C-g>", "<CMD>CodeDiff<CR>", desc = "Git diff explorer" },
     { "<leader>gf", "<CMD>CodeDiff history %<CR>", desc = "File commit history" },
@@ -131,6 +131,24 @@ return {
     -- points instead.
     local lifecycle = require("codediff.ui.lifecycle")
     local view = require("codediff.ui.view")
+    local pi_rewind = require("utils.codediff_pi_rewind")
+
+    -- CodeDiff explorer sessions start with an empty placeholder diff result
+    -- until the scheduled first file selection runs. Replacing one CodeDiff tab
+    -- with another can briefly resume that placeholder; normalize it so the
+    -- renderer treats it as an empty diff instead of crashing on nil changes.
+    local core = require("codediff.ui.core")
+    if not core._pi_empty_diff_guard_patched then
+      local original_render_diff = core.render_diff
+      core.render_diff = function(left_bufnr, right_bufnr, original_lines, modified_lines, lines_diff)
+        lines_diff = lines_diff or {}
+        lines_diff.changes = lines_diff.changes or {}
+        lines_diff.moves = lines_diff.moves or {}
+        return original_render_diff(left_bufnr, right_bufnr, original_lines, modified_lines, lines_diff)
+      end
+      core._pi_empty_diff_guard_patched = true
+    end
+
     if not view._pi_binary_skip_patched then
       local original_view_update = view.update
       view.update = function(tabpage, session_config, auto_scroll_to_first_hunk)
@@ -288,11 +306,7 @@ return {
         return nil
       end
 
-      if path:sub(1, 1) == "/" then
-        return require("utils.ai").strip_cwd(path)
-      end
-
-      return path
+      return require("utils.ai").strip_cwd(path)
     end
 
     local function build_hunk_reference(session, hunk)
@@ -373,14 +387,51 @@ return {
       end, { buffer = buf, desc = "Prompt AI with CodeDiff hunk" })
     end
 
+    local function set_pi_rewind_keymaps(buf, diff_tab)
+      if vim.b[buf].codediff_pi_rewind_tab == diff_tab then
+        return
+      end
+      if vim.bo[buf].filetype ~= "codediff-explorer" then
+        return
+      end
+
+      vim.b[buf].codediff_pi_rewind_tab = diff_tab
+      vim.keymap.set("n", "l", function()
+        pi_rewind.pick_user_message({ tabpage = diff_tab, prompt_on_fail = true })
+      end, { buffer = buf, desc = "Pick Pi user-message checkpoint diff" })
+      vim.keymap.set("n", "L", function()
+        pi_rewind.prompt_last_turn({ tabpage = diff_tab })
+      end, { buffer = buf, desc = "Paste Pi checkpoint diff spec" })
+    end
+
     local function set_codediff_buffer_keymaps(buf, diff_tab)
       set_gf_keymap(buf, diff_tab)
+      set_pi_rewind_keymaps(buf, diff_tab)
 
       local session = lifecycle.get_session(diff_tab)
       if session and (buf == session.original_bufnr or buf == session.modified_bufnr) then
         set_ai_hunk_keymap(buf, diff_tab)
       end
     end
+
+    vim.api.nvim_create_user_command("CodeDiffPiLastTurn", function(opts)
+      if opts.args and vim.trim(opts.args) ~= "" then
+        pi_rewind.open_spec(opts.args)
+      else
+        pi_rewind.open_last_turn({ prompt_on_fail = true })
+      end
+    end, {
+      nargs = "*",
+      force = true,
+      desc = "Open CodeDiff for the latest pi-rewind turn checkpoint",
+    })
+
+    vim.api.nvim_create_user_command("CodeDiffPiMessages", function()
+      pi_rewind.pick_user_message({ prompt_on_fail = true })
+    end, {
+      force = true,
+      desc = "Pick a Pi user-message checkpoint diff",
+    })
 
     local gf_augroup = vim.api.nvim_create_augroup("CodeDiffGf", { clear = true })
 
