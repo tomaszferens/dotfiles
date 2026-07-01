@@ -49,6 +49,8 @@ local function git_output(git_root, args)
 end
 
 local session_user_message_cache = {}
+local diff_status_filters = {}
+local git_diff_filter_patched = false
 
 local function find_pi_session_file(session_id)
   if not session_id or session_id == "" then
@@ -218,6 +220,89 @@ local function current_branch_entries(entries, by_id, leaf_id)
   return branch
 end
 
+local function normalize_repo_path(path)
+  if type(path) ~= "string" or path == "" then
+    return nil
+  end
+
+  path = path:gsub("^@", ""):gsub("\\", "/")
+  path = path:gsub("^%./", "")
+  path = path:gsub("^/Users/[^/]+/projects/[^/]+/", "")
+  path = path:gsub("^/", "")
+  return path ~= "" and path or nil
+end
+
+local function add_touched_path(message, path, timestamp)
+  path = normalize_repo_path(path)
+  if not path then
+    return
+  end
+
+  message.touched_paths = message.touched_paths or {}
+  message.touched_paths[path] = true
+  if timestamp and ((message.last_touched_timestamp or 0) < timestamp) then
+    message.last_touched_timestamp = timestamp
+  end
+end
+
+local function add_paths_from_shell_command(message, command, timestamp)
+  if type(command) ~= "string" then
+    return
+  end
+
+  -- Capture repo-looking paths from commands like `rm apps/foo.ts`, prettier,
+  -- codegen, etc. This is intentionally broad: it is only used as a display
+  -- filter for the selected user-message diff.
+  for candidate in command:gmatch("[%w%._@/-]+%.[%w_%-]+") do
+    if candidate:find("/", 1, true) then
+      add_touched_path(message, candidate, timestamp)
+    end
+  end
+end
+
+local function collect_touched_paths(message, entry)
+  if not message or entry.type ~= "message" or type(entry.message) ~= "table" then
+    return
+  end
+
+  local entry_timestamp = timestamp_to_ms(entry.message and entry.message.timestamp) or timestamp_to_ms(entry.timestamp)
+  local msg = entry.message
+  if msg.role == "assistant" and type(msg.content) == "table" then
+    for _, block in ipairs(msg.content) do
+      if type(block) == "table" and block.type == "toolCall" then
+        local name = block.name
+        local args = block.arguments or {}
+        if (name == "edit" or name == "write") and args.path then
+          add_touched_path(message, args.path, entry_timestamp)
+        elseif name == "bash" then
+          add_paths_from_shell_command(message, args.command, entry_timestamp)
+        elseif name == "ctx_execute" then
+          add_paths_from_shell_command(message, args.code or args.command, entry_timestamp)
+        elseif name == "ctx_batch_execute" and type(args.commands) == "table" then
+          for _, command in ipairs(args.commands) do
+            add_paths_from_shell_command(message, command.command, entry_timestamp)
+          end
+        end
+      end
+    end
+  elseif msg.role == "toolResult" then
+    if msg.toolName == "edit" or msg.toolName == "write" then
+      local text = user_content_text(msg.content)
+      add_touched_path(message, text:match(" in ([%w%._@/-]+%.[%w_%-]+)"), entry_timestamp)
+      add_touched_path(message, text:match(" to ([%w%._@/-]+%.[%w_%-]+)"), entry_timestamp)
+    end
+  end
+end
+
+local function touched_path_list(message)
+  local paths = {}
+  for path in pairs(message.touched_paths or {}) do
+    table.insert(paths, path)
+  end
+  table.sort(paths)
+  return paths
+end
+
 local function session_file_stamp(session_file)
   return tostring(vim.fn.getftime(session_file)) .. ":" .. tostring(vim.fn.getfsize(session_file))
 end
@@ -242,19 +327,28 @@ local function load_session_user_messages(session_id)
   end
 
   local messages = {}
+  local current_message = nil
   for _, entry in ipairs(current_branch_entries(entries, by_id, leaf_id)) do
     if is_user_message_entry(entry) then
       local ts = timestamp_to_ms(entry.message.timestamp) or timestamp_to_ms(entry.timestamp)
       if ts then
-        table.insert(messages, {
+        current_message = {
           index = #messages + 1,
           id = entry.id,
           session_id = session_id,
           timestamp = ts,
           text = user_content_text(entry.message.content),
-        })
+          touched_paths = {},
+        }
+        table.insert(messages, current_message)
       end
+    else
+      collect_touched_paths(current_message, entry)
     end
+  end
+
+  for _, message in ipairs(messages) do
+    message.only_paths = touched_path_list(message)
   end
 
   for i, message in ipairs(messages) do
@@ -437,7 +531,7 @@ local function load_checkpoints(git_root)
   local record_sep = string.char(0x1e)
   local output, err = git_output(git_root, {
     "for-each-ref",
-    "--format=%(refname)%1f%(objectname)%1f%(committerdate:unix)%1f%(contents:body)%1e",
+    "--format=%(refname)%1f%(objectname)%1f%(committerdate:unix)%1f%(contents)%1e",
     REF_PREFIX,
   })
   if not output then
@@ -509,6 +603,19 @@ end
 local function checkpoint_prompt_key(cp)
   local description = cp and cp.description or ""
   return description:match('^"([^"]*)"')
+end
+
+local function pi_prompt_label(message)
+  local text = tostring((message and message.text) or "")
+  if #text <= 60 then
+    return text
+  end
+  return text:sub(1, 59) .. "…"
+end
+
+local function checkpoint_matches_message(cp, message)
+  local key = checkpoint_prompt_key(cp)
+  return key ~= nil and key == pi_prompt_label(message)
 end
 
 local function checkpoint_index(checkpoints, target)
@@ -592,19 +699,104 @@ local function latest_session_id_from_checkpoints(checkpoints, opts)
   return nil
 end
 
-local function find_pair_for_user_message(checkpoints, message)
+local function checkpoint_is_in_message_window(cp, message)
+  return cp.session_id == message.session_id
+    and cp.kind == "turn"
+    and (cp.timestamp or 0) >= message.timestamp
+    and (not message.next_timestamp or (cp.timestamp or 0) < message.next_timestamp)
+end
+
+local function find_latest_checkpoint_for_user_message(checkpoints, message)
   local latest = nil
+
+  -- Prefer the checkpoint whose pi-rewind prompt label matches this branch
+  -- message. This avoids borrowing checkpoints from abandoned /tree branches
+  -- that happen to be chronologically between two current-branch messages.
   for _, cp in ipairs(checkpoints) do
-    if
-      cp.session_id == message.session_id
-      and cp.kind == "turn"
-      and (cp.timestamp or 0) >= message.timestamp
-      and (not message.next_timestamp or (cp.timestamp or 0) < message.next_timestamp)
-    then
+    if checkpoint_is_in_message_window(cp, message) and checkpoint_matches_message(cp, message) then
+      latest = cp
+    end
+  end
+  if latest then
+    return latest
+  end
+
+  -- Fallback for older/malformed checkpoint labels.
+  for _, cp in ipairs(checkpoints) do
+    if checkpoint_is_in_message_window(cp, message) then
       latest = cp
     end
   end
 
+  return latest
+end
+
+local function initial_baseline_for_messages(checkpoints, session_id, first_timestamp)
+  local baseline = nil
+  for _, cp in ipairs(checkpoints) do
+    if cp.session_id == session_id and cp.kind ~= "before-restore" and (cp.timestamp or 0) < first_timestamp then
+      baseline = cp
+    end
+  end
+  return baseline
+end
+
+local function first_checkpoint_after(checkpoints, session_id, timestamp)
+  for _, cp in ipairs(checkpoints) do
+    if cp.session_id == session_id and cp.kind == "turn" and (cp.timestamp or 0) > timestamp then
+      return cp
+    end
+  end
+  return nil
+end
+
+local function pair_display_target(checkpoints, message, latest)
+  if not latest then
+    return first_checkpoint_after(checkpoints, message.session_id, message.last_touched_timestamp or message.timestamp)
+  end
+
+  -- pi-rewind sometimes creates the last checkpoint before a later mutating
+  -- shell command in the same assistant turn (for example `rm file.ts`). The
+  -- deletion then only appears in the next checkpoint, which chronologically
+  -- belongs to the next user message. Keep the per-message path filter, but
+  -- let this message use the first later checkpoint so those late changes do
+  -- not disappear completely.
+  if message.last_touched_timestamp and message.last_touched_timestamp > (latest.timestamp or 0) then
+    return first_checkpoint_after(checkpoints, message.session_id, message.last_touched_timestamp) or latest
+  end
+
+  return latest
+end
+
+local function assign_user_message_diff_pairs(checkpoints, messages, session_id)
+  if not messages or #messages == 0 then
+    return
+  end
+
+  local baseline = initial_baseline_for_messages(checkpoints, session_id, messages[1].timestamp)
+  for _, message in ipairs(messages) do
+    message.diff_pair = nil
+    local latest = find_latest_checkpoint_for_user_message(checkpoints, message)
+    local display_to = pair_display_target(checkpoints, message, latest)
+    if display_to and baseline then
+      message.diff_pair = { from = baseline, to = display_to }
+      if latest then
+        baseline = latest
+      end
+    elseif latest then
+      -- If there is no earlier resume/turn checkpoint, use the old timestamp
+      -- fallback rather than showing stale changes from another branch.
+      local previous = find_previous_eligible_before(checkpoints, latest, message.timestamp)
+      if previous then
+        message.diff_pair = { from = previous, to = display_to or latest }
+        baseline = latest
+      end
+    end
+  end
+end
+
+local function find_pair_for_user_message(checkpoints, message)
+  local latest = find_latest_checkpoint_for_user_message(checkpoints, message)
   if not latest then
     return nil, "No pi-rewind file-change checkpoint for this user message"
   end
@@ -614,7 +806,7 @@ local function find_pair_for_user_message(checkpoints, message)
     return nil, "No baseline checkpoint before this user message"
   end
 
-  return { from = previous, to = latest }, nil
+  return { from = previous, to = pair_display_target(checkpoints, message, latest) or latest }, nil
 end
 
 local function find_latest_turn_pair(git_root, opts)
@@ -838,6 +1030,117 @@ local function default_no_diff_lines(message)
   return lines
 end
 
+local function path_is_within(path, root)
+  if not path or not root or root == "" then
+    return false
+  end
+  return path == root or path:sub(1, #root + 1) == root .. "/"
+end
+
+local function path_matches_any(path, roots)
+  path = normalize_repo_path(path)
+  if not path then
+    return false
+  end
+
+  for _, root in ipairs(roots or {}) do
+    root = normalize_repo_path(root)
+    if root and (path_is_within(path, root) or path_is_within(root, path)) then
+      return true
+    end
+  end
+
+  return false
+end
+
+local function filter_status_result(status_result, only_paths)
+  if not only_paths or #only_paths == 0 then
+    return status_result
+  end
+
+  local function keep(file)
+    return path_matches_any(file.path, only_paths) or path_matches_any(file.old_path, only_paths)
+  end
+
+  local filtered = {
+    unstaged = {},
+    staged = {},
+    conflicts = {},
+  }
+
+  for _, file in ipairs(status_result.unstaged or {}) do
+    if keep(file) then
+      table.insert(filtered.unstaged, file)
+    end
+  end
+  for _, file in ipairs(status_result.staged or {}) do
+    if keep(file) then
+      table.insert(filtered.staged, file)
+    end
+  end
+  for _, file in ipairs(status_result.conflicts or {}) do
+    if keep(file) then
+      table.insert(filtered.conflicts, file)
+    end
+  end
+
+  return filtered
+end
+
+local function diff_filter_key(git_root, from_revision, to_revision)
+  git_root = tostring(git_root or ""):gsub("/+$", "")
+  return table.concat({ git_root, tostring(from_revision or ""), tostring(to_revision or "") }, "\0")
+end
+
+local function ensure_git_diff_filter_patch()
+  if git_diff_filter_patched then
+    return
+  end
+
+  local ok, git = pcall(require, "codediff.core.git")
+  if not ok or type(git.get_diff_revisions) ~= "function" then
+    return
+  end
+
+  if git._pi_rewind_original_get_diff_revisions then
+    git_diff_filter_patched = true
+    return
+  end
+
+  local original_get_diff_revisions = git.get_diff_revisions
+  git._pi_rewind_original_get_diff_revisions = original_get_diff_revisions
+  git.get_diff_revisions = function(rev1, rev2, git_root, callback)
+    local filter = diff_status_filters[diff_filter_key(git_root, rev1, rev2)]
+    if not filter or type(callback) ~= "function" then
+      return original_get_diff_revisions(rev1, rev2, git_root, callback)
+    end
+
+    return original_get_diff_revisions(rev1, rev2, git_root, function(err, status_result)
+      if not err and status_result then
+        local ok_filter, filtered = pcall(filter, status_result)
+        if ok_filter and filtered then
+          status_result = filtered
+        end
+      end
+      callback(err, status_result)
+    end)
+  end
+
+  git_diff_filter_patched = true
+end
+
+local function register_diff_status_filter(git_root, from_revision, to_revision, only_paths)
+  if not only_paths or #only_paths == 0 then
+    return
+  end
+
+  local paths = vim.deepcopy(only_paths)
+  diff_status_filters[diff_filter_key(git_root, from_revision, to_revision)] = function(status_result)
+    return filter_status_result(status_result, paths)
+  end
+  ensure_git_diff_filter_patch()
+end
+
 local function open_explorer(git_root, from_revision, to_revision, opts)
   opts = opts or {}
   local from_sha, from_err = resolve_revision(git_root, from_revision)
@@ -852,6 +1155,8 @@ local function open_explorer(git_root, from_revision, to_revision, opts)
     return false
   end
 
+  register_diff_status_filter(git_root, from_sha, to_sha, opts.only_paths)
+
   local git = require("codediff.core.git")
   git.get_diff_revisions(from_sha, to_sha, git_root, function(err, status_result)
     vim.schedule(function()
@@ -859,6 +1164,8 @@ local function open_explorer(git_root, from_revision, to_revision, opts)
         notify("Failed to compute checkpoint diff: " .. err, vim.log.levels.ERROR)
         return
       end
+
+      status_result = filter_status_result(status_result, opts.only_paths)
 
       if status_count(status_result) == 0 then
         show_info(opts.no_diff_lines or { "No file changes between the selected pi-rewind checkpoints." }, opts)
@@ -1028,6 +1335,7 @@ function M.open_user_message_diff(message, opts)
   return open_explorer(git_root, pair.from.ref, pair.to.ref, vim.tbl_extend("force", opts, {
     label = "Opened Pi user message diff: " .. truncate_text(message.text, 80),
     no_diff_lines = default_no_diff_lines(message),
+    only_paths = message.only_paths,
   }))
 end
 
@@ -1057,12 +1365,12 @@ function M.pick_user_message(opts)
     return M.open_last_turn(opts)
   end
 
+  assign_user_message_diff_pairs(checkpoints, messages, session_id)
+
   local items = {}
   for i = #messages, 1, -1 do
     local message = messages[i]
-    local pair = find_pair_for_user_message(checkpoints, message)
-    message.diff_pair = pair
-    message.diff_status = pair and "diff" or "no diff"
+    message.diff_status = message.diff_pair and "diff" or "no diff"
     table.insert(items, message)
   end
 
