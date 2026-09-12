@@ -6,6 +6,30 @@
 
 node_modules
 
+# Local credentials.
+/.zshrc
+.env
+.env.*
+*.env
+auth.json*
+credentials*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and local databases are not dotfiles.
+*.log
+*.log.*
+*.db
+*.db-*
+*.sqlite*
+
+# Share only Herdr preferences and the Neovim bridge, never session state.
+/.config/herdr/*
+!/.config/herdr/config.toml
+!/.config/herdr/nvim-ai-bridge.sh
+
 .pi/agent/sessions/
 .pi/agent/.extmgr-cache/
 .pi/agent/.update-check

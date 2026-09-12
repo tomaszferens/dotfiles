@@ -60,10 +60,20 @@ local function eslint_fix_all(bufnr)
   end
 end
 
-vim.api.nvim_create_augroup("EslintFixAllOnSave", { clear = true })
+local function oxlint_fix_all(bufnr)
+  for _, client in ipairs(vim.lsp.get_clients({ bufnr = bufnr, name = "oxlint" })) do
+    client:request_sync("workspace/executeCommand", {
+      command = "oxc.fixAll",
+      arguments = { { uri = vim.uri_from_bufnr(bufnr) } },
+    }, 1000, bufnr)
+  end
+end
+
+vim.api.nvim_create_augroup("LinterFixAllOnSave", { clear = true })
 vim.api.nvim_create_autocmd("BufWritePre", {
-  group = "EslintFixAllOnSave",
+  group = "LinterFixAllOnSave",
   callback = function(event)
+    oxlint_fix_all(event.buf)
     eslint_fix_all(event.buf)
   end,
 })

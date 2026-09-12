@@ -18,18 +18,25 @@ vim.opt.diffopt = {
 
 vim.opt.relativenumber = false
 
--- Start a known server so wezterm/tmux can query neovim for current file (per-pane).
--- In tmux, WEZTERM_PANE is the outer terminal pane and is shared by all tmux
--- panes, so prefer TMUX_PANE to avoid socket collisions.
-local pane_id = vim.env.TMUX_PANE or vim.env.WEZTERM_PANE or "0"
-pane_id = pane_id:gsub("[^%w_.-]", "_")
-local server_path = "/tmp/nvim-wezterm-" .. pane_id .. ".sock"
+-- Start a known server so wezterm/tmux/herdr can query neovim for the current
+-- file. Inside herdr the socket is workspace-scoped (one Neovim per herdr
+-- workspace; the alt+a bridge script finds it by HERDR_WORKSPACE_ID).
+-- Otherwise it is per-pane: in tmux, WEZTERM_PANE is the outer terminal pane
+-- and is shared by all tmux panes, so prefer TMUX_PANE to avoid collisions.
+local server_path
+if vim.env.HERDR_WORKSPACE_ID then
+  local workspace_id = vim.env.HERDR_WORKSPACE_ID:gsub("[^%w_.-]", "_")
+  server_path = "/tmp/nvim-herdr-" .. workspace_id .. ".sock"
+else
+  local pane_id = vim.env.TMUX_PANE or vim.env.WEZTERM_PANE or "0"
+  pane_id = pane_id:gsub("[^%w_.-]", "_")
+  server_path = "/tmp/nvim-wezterm-" .. pane_id .. ".sock"
+end
 pcall(vim.fn.delete, server_path)
 pcall(vim.fn.serverstart, server_path)
 vim.g.ai_cmp = false
 vim.g.lazyvim_ts_lsp = "tsgo"
--- Use an explicit synchronous source.fixAll.eslint autocmd instead of ESLint's
--- formatting provider, so fixes are applied before the file is written.
+-- Apply project-specific linter fixes synchronously before formatting and writing.
 vim.g.lazyvim_eslint_auto_format = false
 
 -- diff line backgrounds

@@ -1,21 +1,20 @@
 {
-  "lastChangelogVersion": "0.80.3",
-  "defaultThinkingLevel": "xhigh",
+  "lastChangelogVersion": "0.85.1",
+  "defaultThinkingLevel": "max",
   "steeringMode": "all",
   "theme": "dark",
   "editorPaddingX": 1,
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.5",
+  "defaultModel": "gpt-6-astra",
   "showHardwareCursor": false,
   "packages": [
     "npm:pi-web-access",
     "npm:pi-rewind",
     "npm:@ff-labs/pi-fff",
     "npm:@plannotator/pi-extension",
-    "npm:context-mode",
-    "npm:pi-mcp-adapter",
-    "npm:@hypabolic/pi-hypa"
+    "npm:pi-mcp-adapter"
   ],
   "hideThinkingBlock": false,
-  "powerline": "default"
+  "powerline": "default",
+  "tuiMode": "fullscreen"
 }

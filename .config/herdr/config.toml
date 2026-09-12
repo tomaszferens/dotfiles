@@ -1,0 +1,48 @@
+onboarding = false
+[theme]
+name = "tokyo-night"
+
+# surface_dim paints the active space/agent row background in the sidebar;
+# stock tokyo-night makes it near-invisible. Tokyo Night selection blue.
+# text is the active/emphasized foreground — full white for contrast on it.
+auto_switch = false
+[theme.custom]
+surface_dim = "#283457"
+text = "#ffffff"
+
+[ui]
+agent_panel_sort = "spaces"
+
+# Default agent rows use overlay0 (#565f89) for the tab and agent-name text,
+# which is unreadable on the surface_dim active-row bar. Same layout as the
+# default, with an explicit readable foreground on those tokens.
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", "workspace", { token = "tab", fg = "#a9b1d6" }],
+  [{ token = "agent", fg = "#a9b1d6" }],
+]
+
+# Direct alt chords (no prefix) — herdr grabs them before panes see them.
+# Neovim maps already use alt+h/n/o/s/t/b/f/,/. so those are avoided; j/k, u/i,
+# and digits are free. Same motion at two scopes: alt = agents, alt+shift =
+# spaces; u/i (above j/k) cycle tabs left/right. alt+u/i replace the default
+# prefix+p/prefix+n tab bindings.
+# WezTerm owns alt+1..9 and alt+shift+j/k for itself; herdr_passthrough in
+# wezterm.lua forwards them here whenever the focused WezTerm pane runs herdr.
+[keys]
+next_agent = "alt+j"
+previous_agent = "alt+k"
+next_tab = "alt+i"
+previous_tab = "alt+u"
+focus_agent = "alt+1..9"
+next_workspace = "alt+shift+j"
+previous_workspace = "alt+shift+k"
+switch_workspace = "prefix+alt+1..9"
+
+# alt+a: two-way file-reference bridge with the workspace's Neovim.
+# Direct chord — herdr intercepts it before panes see it; the script branches
+# on the focused pane (Neovim vs agent). See nvim-ai-bridge.sh in this dir.
+[[keys.command]]
+key = "alt+a"
+type = "shell"
+command = "/Users/tomaszferens/.config/herdr/nvim-ai-bridge.sh"

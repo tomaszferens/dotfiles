@@ -16,6 +16,13 @@ return {
       opts.servers.eslint.settings.workingDirectory = opts.servers.eslint.settings.workingDirectory or { mode = "auto" }
       opts.servers.eslint.settings.workingDirectories = nil
 
+      opts.servers.oxlint = vim.tbl_deep_extend("force", opts.servers.oxlint or {}, {
+        settings = {
+          fixKind = "all",
+        },
+      })
+      opts.servers.oxfmt = { enabled = false }
+
       opts.servers["*"] = opts.servers["*"] or {}
       opts.servers["*"].keys = opts.servers["*"].keys or {}
       vim.list_extend(opts.servers["*"].keys, {

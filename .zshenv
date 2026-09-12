@@ -17,6 +17,13 @@ export SHELL_SESSIONS_DISABLE=1
 export RIPGREP_CONFIG_PATH="$XDG_CONFIG_HOME/.ripgreprc"
 alias claude="claude --dangerously-skip-permissions"
 
+# Kill detached tmux sessions.
+tmux-kd() {
+  tmux list-sessions -F '#{session_attached} #{session_id}' |
+    awk '$1 == 0 {print $2}' |
+    xargs -r -n1 tmux kill-session -t
+}
+
 # Personal bin directory.
 export PATH="$HOME/bin:$PATH"
 
@@ -24,6 +31,10 @@ export PATH="$HOME/bin:$PATH"
 alias config='git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
 CONFIG_TRACKED=(
+  ~/.config/ghostty/config
+  ~/.config/ghostty/themes
+  ~/.config/herdr/config.toml
+  ~/.config/herdr/nvim-ai-bridge.sh
   ~/.config/nvim
   ~/.config/wezterm
   ~/.config/mcphub
@@ -46,3 +57,24 @@ configpush() {
 
 # pi-fff: always replace built-in grep/find with FFF
 export PI_FFF_MODE=override
+
+unalias claudex 2>/dev/null
+function claudex {
+  local proxy_key
+  proxy_key=$(awk '/^api-keys:/{getline; gsub(/^[[:space:]]*-[[:space:]]*"|"[[:space:]]*$/, ""); print; exit}' \
+    "$HOME/.cli-proxy-api/config.yaml")
+
+  if [[ -z "$proxy_key" ]]; then
+    print -u2 "claudex: no API key found in ~/.cli-proxy-api/config.yaml"
+    return 1
+  fi
+
+  env -u ANTHROPIC_API_KEY \
+    ANTHROPIC_BASE_URL=http://127.0.0.1:8317 \
+    ANTHROPIC_AUTH_TOKEN="$proxy_key" \
+    CLAUDE_CODE_SUBAGENT_MODEL=gpt-5.6-sol \
+    CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 \
+    CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY=3 \
+    ENABLE_TOOL_SEARCH=false \
+    claude --dangerously-skip-permissions --model gpt-5.6-sol "$@"
+}

@@ -8,14 +8,22 @@ local AGENT_PRIORITY = {
   { name = "claude", aliases = { "claude" } },
   { name = "codex", aliases = { "codex" } },
   { name = "opencode", aliases = { "opencode" } },
+  { name = "opencode2", aliases = { "opencode2" } },
 }
 
 local function wezterm_available()
   return WEZTERM and WEZTERM ~= ""
 end
 
-local function tmux_available()
-  return TMUX and TMUX ~= "" and vim.env.TMUX and vim.env.TMUX_PANE
+local function tmux_binary_available()
+  return TMUX and TMUX ~= ""
+end
+
+-- tmux commands (list-clients, list-panes, send-keys) work against the default
+-- server even when nvim itself is not running inside tmux; only the
+-- pane-adjacency and current-session logic needs us to actually be inside.
+local function inside_tmux()
+  return tmux_binary_available() and vim.env.TMUX and vim.env.TMUX_PANE
 end
 
 --- Get the wezterm pane ID in the given direction relative to the current pane.
@@ -68,14 +76,17 @@ local function has_word(text, word)
   return text:match("%f[%w]" .. vim.pesc(word:lower()) .. "%f[%W]") ~= nil
 end
 
-local function wezterm_pane_process_text(pane)
+--- Names and command lines of the processes attached to a pane's tty.
+--- Works for both wezterm panes (tty_name from `wezterm cli list`) and tmux
+--- panes (tty_name populated from #{pane_tty}).
+local function pane_process_text(pane)
   local tty = pane.tty_name or ""
   if tty == "" then
     return ""
   end
 
   tty = tty:gsub("^/dev/", "")
-  local lines = vim.fn.systemlist({ "ps", "-t", tty, "-o", "comm=" })
+  local lines = vim.fn.systemlist({ "ps", "-t", tty, "-o", "comm=", "-o", "command=" })
   if vim.v.shell_error ~= 0 then
     return ""
   end
@@ -90,24 +101,24 @@ local function pane_search_text(pane)
     pane.current_command or "",
     pane.window_name or "",
     pane.session_name or "",
-    wezterm_pane_process_text(pane),
+    pane_process_text(pane),
   }, " "):lower()
 end
 
-local function pane_matches_agent(pane, agent)
+--- Priority rank of the coding agent running in this pane, or nil if none.
+---@return number|nil
+local function pane_agent_rank(pane)
   local text = pane_search_text(pane)
 
-  for _, alias in ipairs(agent.aliases) do
-    if has_word(text, alias) then
-      return true
+  for rank, agent in ipairs(AGENT_PRIORITY) do
+    for _, alias in ipairs(agent.aliases) do
+      if has_word(text, alias) then
+        return rank
+      end
     end
   end
 
-  return false
-end
-
-local function pane_is_tmux(pane)
-  return has_word(pane_search_text(pane), "tmux")
+  return nil
 end
 
 local function current_wezterm_window_id(panes, current_pane)
@@ -143,36 +154,6 @@ local function same_wezterm_window_panes()
   return same_window, current_pane, current_window
 end
 
---- Find the first tab/pane running a known coding agent in the current WezTerm window.
----@return number|nil
-local function find_agent_pane()
-  local panes, current_pane = same_wezterm_window_panes()
-
-  for _, agent in ipairs(AGENT_PRIORITY) do
-    for _, pane in ipairs(panes) do
-      local pane_id = tostring(pane.pane_id or "")
-      if pane_id ~= "" and pane_id ~= current_pane and pane_matches_agent(pane, agent) then
-        return tonumber(pane.pane_id)
-      end
-    end
-  end
-
-  return nil
-end
-
-local function find_tmux_wezterm_pane()
-  local panes, current_pane = same_wezterm_window_panes()
-
-  for _, pane in ipairs(panes) do
-    local pane_id = tostring(pane.pane_id or "")
-    if pane_id ~= "" and pane_id ~= current_pane and pane_is_tmux(pane) then
-      return tonumber(pane.pane_id)
-    end
-  end
-
-  return nil
-end
-
 --- Send text to a specific wezterm pane.
 ---@param pane_id number
 ---@param text string
@@ -192,7 +173,7 @@ local function send_to_pane(pane_id, text)
 end
 
 local function list_tmux_panes(scope)
-  if not tmux_available() then
+  if not tmux_binary_available() then
     return {}
   end
 
@@ -206,6 +187,9 @@ local function list_tmux_panes(scope)
     "#{pane_title}",
     "#{window_name}",
     "#{session_name}",
+    "#{pane_tty}",
+    "#{window_active}",
+    "#{pane_active}",
   }, "\t")
   local cmd
   if scope == "session" then
@@ -233,14 +217,19 @@ local function list_tmux_panes(scope)
       title = parts[7] or "",
       window_name = parts[8] or "",
       session_name = parts[9] or "",
+      tty_name = parts[10] or "",
+      window_active = parts[11] == "1",
+      pane_active = parts[12] == "1",
     })
   end
 
   return panes
 end
 
+--- tmux sessions whose client is attached inside the current WezTerm window
+--- (matched by client tty against the window's pane ttys).
 local function same_wezterm_window_tmux_sessions()
-  if not tmux_available() or not wezterm_available() then
+  if not tmux_binary_available() or not wezterm_available() then
     return nil
   end
 
@@ -290,6 +279,7 @@ local function pane_center(pane, axis)
   return pane.top + pane.height / 2
 end
 
+--- Adjacent tmux pane (as a pane table) in the given direction, or nil.
 local function get_tmux_pane_in_direction(direction)
   local current_pane = vim.env.TMUX_PANE
   if not current_pane then
@@ -298,10 +288,11 @@ local function get_tmux_pane_in_direction(direction)
 
   local panes = list_tmux_panes()
   local current
+  local by_id = {}
   for _, pane in ipairs(panes) do
+    by_id[pane.pane_id] = pane
     if pane.pane_id == current_pane then
       current = pane
-      break
     end
   end
   if not current then
@@ -356,42 +347,7 @@ local function get_tmux_pane_in_direction(direction)
     return a.distance < b.distance
   end)
 
-  return candidates[1] and candidates[1].pane_id or nil
-end
-
-local function find_tmux_agent_pane()
-  local allowed_sessions = same_wezterm_window_tmux_sessions()
-  local panes = allowed_sessions and list_tmux_panes("server") or list_tmux_panes("session")
-  local current_pane = tostring(vim.env.TMUX_PANE or "")
-
-  for _, agent in ipairs(AGENT_PRIORITY) do
-    for _, pane in ipairs(panes) do
-      local pane_id = tostring(pane.pane_id or "")
-      local session_ok = not allowed_sessions or allowed_sessions[pane.session_name or ""]
-      if pane_id ~= "" and pane_id ~= current_pane and session_ok and pane_matches_agent(pane, agent) then
-        return pane.pane_id
-      end
-    end
-  end
-
-  return nil
-end
-
-local function get_tmux_target_pane()
-  if not tmux_available() then
-    return nil
-  end
-
-  local adjacent_pane = get_tmux_pane_in_direction("Down")
-    or get_tmux_pane_in_direction("Right")
-    or get_tmux_pane_in_direction("Left")
-    or get_tmux_pane_in_direction("Up")
-
-  if adjacent_pane then
-    return adjacent_pane
-  end
-
-  return find_tmux_agent_pane()
+  return candidates[1] and by_id[candidates[1].pane_id] or nil
 end
 
 local function send_tmux_enter(pane_id)
@@ -438,45 +394,182 @@ local function send_to_tmux_pane(pane_id, text)
   end
 end
 
-local function send_to_tmux_target(text)
-  local pane_id = get_tmux_target_pane()
-  if not pane_id then
+local DIRECTIONS = { "Down", "Right", "Left", "Up" }
+
+--- Adjacent tmux split that is verified to run a coding agent.
+local function adjacent_tmux_agent_pane()
+  if not inside_tmux() then
     return nil
   end
 
-  return send_to_tmux_pane(pane_id, text)
-end
-
-local function get_target_pane()
-  local adjacent_pane = get_pane_in_direction("Down")
-    or get_pane_in_direction("Right")
-    or get_pane_in_direction("Left")
-    or get_pane_in_direction("Up")
-
-  if adjacent_pane then
-    return adjacent_pane
+  for _, direction in ipairs(DIRECTIONS) do
+    local pane = get_tmux_pane_in_direction(direction)
+    if pane and pane_agent_rank(pane) then
+      return pane.pane_id
+    end
   end
 
-  return find_agent_pane() or find_tmux_wezterm_pane()
+  return nil
 end
 
---- Send text to an adjacent tmux/wezterm pane (Down, Right, Left, or Up), falling back
---- to the first tab/pane that looks like a coding-agent session.
+--- Adjacent wezterm split that is verified to run a coding agent.
+local function adjacent_wezterm_agent_pane()
+  if not wezterm_available() then
+    return nil
+  end
+
+  local by_id = {}
+  for _, pane in ipairs(list_wezterm_panes()) do
+    by_id[tostring(pane.pane_id or "")] = pane
+  end
+
+  for _, direction in ipairs(DIRECTIONS) do
+    local pane_id = get_pane_in_direction(direction)
+    if pane_id then
+      local pane = by_id[tostring(pane_id)]
+      if pane and pane_agent_rank(pane) then
+        return pane_id
+      end
+    end
+  end
+
+  return nil
+end
+
+--- tmux panes worth inspecting: panes of sessions attached inside the current
+--- WezTerm window, plus (when nvim runs inside tmux) panes of the current
+--- session. Reachable even when nvim itself is outside tmux — agents often
+--- live inside a tmux session in another tab, invisible to `wezterm cli list`.
+local function tmux_candidate_panes()
+  if not tmux_binary_available() then
+    return {}
+  end
+
+  local seen = {}
+  local panes = {}
+
+  local function add(list, allowed_sessions)
+    for _, pane in ipairs(list) do
+      local pane_id = tostring(pane.pane_id or "")
+      local session_ok = not allowed_sessions or allowed_sessions[pane.session_name or ""]
+      if pane_id ~= "" and session_ok and not seen[pane_id] then
+        seen[pane_id] = true
+        table.insert(panes, pane)
+      end
+    end
+  end
+
+  local window_sessions = same_wezterm_window_tmux_sessions()
+  if window_sessions then
+    add(list_tmux_panes("server"), window_sessions)
+  end
+  if inside_tmux() then
+    add(list_tmux_panes("session"), nil)
+  end
+
+  return panes
+end
+
+--- Every pane in reach that runs a coding agent, as
+--- { kind = "tmux"|"wezterm", pane_id, rank, visible, focused, order } candidates.
+local function agent_candidates()
+  local candidates = {}
+
+  local function add(kind, pane_id, rank, visible, focused)
+    table.insert(candidates, {
+      kind = kind,
+      pane_id = pane_id,
+      rank = rank,
+      visible = visible == true,
+      focused = focused == true,
+      order = #candidates,
+    })
+  end
+
+  local current_tmux_pane = tostring(vim.env.TMUX_PANE or "")
+  for _, pane in ipairs(tmux_candidate_panes()) do
+    if tostring(pane.pane_id) ~= current_tmux_pane then
+      local rank = pane_agent_rank(pane)
+      if rank then
+        -- pane_active is per-window; only the visible window's active pane
+        -- counts as focused.
+        add("tmux", pane.pane_id, rank, pane.window_active, pane.window_active and pane.pane_active)
+      end
+    end
+  end
+
+  local wezterm_panes, current_wezterm_pane = same_wezterm_window_panes()
+  for _, pane in ipairs(wezterm_panes) do
+    local pane_id = tostring(pane.pane_id or "")
+    if pane_id ~= "" and pane_id ~= current_wezterm_pane then
+      local rank = pane_agent_rank(pane)
+      if rank then
+        add("wezterm", tonumber(pane.pane_id), rank, false, false)
+      end
+    end
+  end
+
+  -- The agent the user is looking at wins: panes in the *active* tmux window
+  -- beat hidden ones, regardless of agent priority — otherwise pi in window 0
+  -- would always steal from claude in the currently selected window. Then the
+  -- focused pane within that window, then AGENT_PRIORITY order. On remaining
+  -- ties prefer tmux targets: send-keys hits the exact pane, whereas a wezterm
+  -- pane hosting tmux only forwards to whatever pane happens to be active.
+  table.sort(candidates, function(a, b)
+    if a.visible ~= b.visible then
+      return a.visible
+    end
+    if a.focused ~= b.focused then
+      return a.focused
+    end
+    if a.rank ~= b.rank then
+      return a.rank < b.rank
+    end
+    if a.kind ~= b.kind then
+      return a.kind == "tmux"
+    end
+    return a.order < b.order
+  end)
+
+  return candidates
+end
+
+--- Pick the pane to send to. Only panes verified to run a coding agent
+--- (pi/claude/codex/opencode/opencode2) are considered; adjacent splits win, then the
+--- agent in the active tmux window, then the highest-priority agent anywhere
+--- in the current window (directly in a wezterm pane or inside a tmux session
+--- attached in this window).
+local function find_target()
+  local tmux_pane = adjacent_tmux_agent_pane()
+  if tmux_pane then
+    return { kind = "tmux", pane_id = tmux_pane }
+  end
+
+  local wezterm_pane = adjacent_wezterm_agent_pane()
+  if wezterm_pane then
+    return { kind = "wezterm", pane_id = wezterm_pane }
+  end
+
+  return agent_candidates()[1]
+end
+
+--- Send text to a pane running a coding agent: an adjacent tmux/wezterm split
+--- first, otherwise the best agent pane in the current window — including
+--- agents running inside tmux sessions in other tabs.
 ---@param text string
 ---@return boolean
 function M.send(text)
-  local tmux_result = send_to_tmux_target(text)
-  if tmux_result ~= nil then
-    return tmux_result
-  end
-
-  local pane_id = get_target_pane()
-  if not pane_id then
-    vim.notify("No adjacent tmux/wezterm pane or coding-agent tab", vim.log.levels.WARN)
+  local target = find_target()
+  if not target then
+    vim.notify("No coding-agent pane found (pi/claude/codex/opencode/opencode2)", vim.log.levels.WARN)
     return false
   end
 
-  return send_to_pane(pane_id, text)
+  if target.kind == "tmux" then
+    return send_to_tmux_pane(target.pane_id, text)
+  end
+
+  return send_to_pane(target.pane_id, text)
 end
 
 local function strip_codediff_url(p)
@@ -583,7 +676,7 @@ function M.prompt_and_send(reference)
       return
     end
 
-    M.send(reference .. " - " .. input .. "\n")
+    M.send(reference .. " - " .. input)
   end)
 
   return true

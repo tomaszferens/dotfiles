@@ -157,6 +157,7 @@ local coding_agents = {
     { name = 'claude', aliases = { 'claude' } },
     { name = 'codex', aliases = { 'codex' } },
     { name = 'opencode', aliases = { 'opencode' } },
+    { name = 'opencode2', aliases = { 'opencode2' } },
 }
 
 local function escape_pattern(s)
@@ -238,6 +239,10 @@ end
 
 local function is_tmux_pane(pane)
     return basename(pane:get_foreground_process_name() or '') == 'tmux'
+end
+
+local function is_herdr_pane(pane)
+    return basename(pane:get_foreground_process_name() or '') == 'herdr'
 end
 
 local function find_nvim_pane_in_tab(tab)
@@ -362,6 +367,24 @@ local function current_nvim_reference(win, pane)
     return reference_from_nvim_helper()
 end
 
+-- herdr binds alt+1..9 (focus agent) and alt+shift+j/k (switch space), which
+-- WezTerm would otherwise swallow for tabs/pane nav. Same passthrough idea as
+-- alt+a/alt+b: inside a herdr pane the chord goes to herdr, elsewhere the
+-- WezTerm action still applies.
+local function herdr_passthrough(key_mods, key, action)
+    return {
+        mods = key_mods,
+        key = key,
+        action = wezterm.action_callback(function(win, pane)
+            if is_herdr_pane(pane) then
+                win:perform_action(act.SendKey { mods = key_mods, key = key }, pane)
+                return
+            end
+            win:perform_action(action, pane)
+        end),
+    }
+end
+
 local mods = 'ALT|SHIFT'
 config.keys = {
     { mods = mods, key = 'x', action = act.ActivateCopyMode },
@@ -370,8 +393,8 @@ config.keys = {
     { mods = mods, key = 's', action = act.SplitVertical { domain = 'CurrentPaneDomain' } },
     { mods = mods, key = 'h', action = pane_navigation_action('Left', 'Prev') },
     { mods = mods, key = 'l', action = pane_navigation_action('Right', 'Next') },
-    { mods = mods, key = 'k', action = pane_navigation_action('Up', 'Prev') },
-    { mods = mods, key = 'j', action = pane_navigation_action('Down', 'Next') },
+    herdr_passthrough(mods, 'k', pane_navigation_action('Up', 'Prev')),
+    herdr_passthrough(mods, 'j', pane_navigation_action('Down', 'Next')),
     { mods = mods, key = 't', action = act.SpawnTab 'CurrentPaneDomain' },
     { mods = mods, key = 'q', action = act.CloseCurrentPane { confirm = true } },
     { mods = mods, key = 'y', action = act.CopyTo 'Clipboard' },
@@ -447,10 +470,11 @@ config.keys = {
         mods = 'ALT',
         key = 'a',
         action = wezterm.action_callback(function(win, pane)
-            -- If this pane is running neovim or tmux, pass the key through. Neovim
-            -- handles <M-a> directly; inside tmux, tmux/Neovim must receive the
-            -- Option-a sequence instead of WezTerm swallowing it.
-            if is_nvim_pane(pane) or is_tmux_pane(pane) then
+            -- If this pane is running neovim, tmux, or herdr, pass the key
+            -- through. Neovim handles <M-a> directly; tmux and herdr own their
+            -- own alt+a bindings and must receive the Option-a sequence
+            -- instead of WezTerm swallowing it.
+            if is_nvim_pane(pane) or is_tmux_pane(pane) or is_herdr_pane(pane) then
                 win:perform_action(act.SendKey { mods = 'ALT', key = 'a' }, pane)
                 return
             end
@@ -467,8 +491,9 @@ config.keys = {
         mods = 'ALT',
         key = 'b',
         action = wezterm.action_callback(function(win, pane)
-            -- Neovim and tmux own <M-b>; tmux will prompt/send via ~/.tmux.conf.
-            if is_nvim_pane(pane) or is_tmux_pane(pane) then
+            -- Neovim, tmux, and herdr own <M-b>; tmux will prompt/send via
+            -- ~/.tmux.conf, and herdr forwards it to the inner Neovim.
+            if is_nvim_pane(pane) or is_tmux_pane(pane) or is_herdr_pane(pane) then
                 win:perform_action(act.SendKey { mods = 'ALT', key = 'b' }, pane)
                 return
             end
@@ -536,15 +561,15 @@ config.keys = {
     { mods = 'ALT', key = '-', action = act.DecreaseFontSize },
     { mods = 'ALT', key = '=', action = act.IncreaseFontSize },
     { mods = 'ALT', key = '0', action = act.ResetFontSize },
-    { mods = 'ALT', key = '1', action = act.ActivateTab(0) },
-    { mods = 'ALT', key = '2', action = act.ActivateTab(1) },
-    { mods = 'ALT', key = '3', action = act.ActivateTab(2) },
-    { mods = 'ALT', key = '4', action = act.ActivateTab(3) },
-    { mods = 'ALT', key = '5', action = act.ActivateTab(4) },
-    { mods = 'ALT', key = '6', action = act.ActivateTab(5) },
-    { mods = 'ALT', key = '7', action = act.ActivateTab(6) },
-    { mods = 'ALT', key = '8', action = act.ActivateTab(7) },
-    { mods = 'ALT', key = '9', action = act.ActivateTab(8) },
+    herdr_passthrough('ALT', '1', act.ActivateTab(0)),
+    herdr_passthrough('ALT', '2', act.ActivateTab(1)),
+    herdr_passthrough('ALT', '3', act.ActivateTab(2)),
+    herdr_passthrough('ALT', '4', act.ActivateTab(3)),
+    herdr_passthrough('ALT', '5', act.ActivateTab(4)),
+    herdr_passthrough('ALT', '6', act.ActivateTab(5)),
+    herdr_passthrough('ALT', '7', act.ActivateTab(6)),
+    herdr_passthrough('ALT', '8', act.ActivateTab(7)),
+    herdr_passthrough('ALT', '9', act.ActivateTab(8)),
     { key = 'LeftArrow', mods = 'ALT', action = wezterm.action { SendString = '\x1bb' } },
     -- Make Option-Right equivalent to Alt-f; forward-word
     { key = 'RightArrow', mods = 'ALT', action = wezterm.action { SendString = '\x1bf' } },

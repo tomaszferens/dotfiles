@@ -44,24 +44,31 @@ vim.keymap.set({ "n", "i" }, "<C-`>", markdown_utils.insert_fence, {
   silent = true,
 })
 
--- WezTerm/tmux pane keybindings
+-- WezTerm/tmux/herdr pane keybindings. Inside herdr the alt+a chord normally
+-- arrives via the bridge script rather than as a keypress, but the mappings
+-- route to the herdr module too in case the key reaches Neovim directly.
 local ai_utils = require("utils.ai")
+local herdr_utils = require("utils.herdr")
 
-map("n", "<M-a>", function()
-  ai_utils.send_file()
-end, { desc = "Send file path to adjacent tmux/wezterm pane or agent" })
+map({ "n", "x", "v" }, "<M-a>", function()
+  if herdr_utils.available() then
+    herdr_utils.send_current_reference()
+  elseif vim.fn.mode():match("^[vV\22]") then
+    ai_utils.send_visual_reference()
+  else
+    ai_utils.send_file()
+  end
+end, { desc = "Send file (or file+lines) reference to agent pane" })
 
-map({ "x", "v" }, "<M-a>", function()
-  ai_utils.send_visual_reference()
-end, { desc = "Send file+lines to adjacent tmux/wezterm pane or agent" })
-
-map("n", "<M-b>", function()
-  ai_utils.send_file_with_prompt()
-end, { desc = "Prompt AI with file path" })
-
-map({ "x", "v" }, "<M-b>", function()
-  ai_utils.send_visual_reference_with_prompt()
-end, { desc = "Prompt AI with file+lines" })
+map({ "n", "x", "v" }, "<M-b>", function()
+  if herdr_utils.available() then
+    herdr_utils.send_current_reference_with_prompt()
+  elseif vim.fn.mode():match("^[vV\22]") then
+    ai_utils.send_visual_reference_with_prompt()
+  else
+    ai_utils.send_file_with_prompt()
+  end
+end, { desc = "Prompt AI with file (or file+lines) reference" })
 
 map("n", "<leader>af", function()
   ai_utils.send_file()
@@ -70,3 +77,26 @@ end, { desc = "Send File" })
 map("x", "<leader>av", function()
   ai_utils.send("{selection}")
 end, { desc = "Send Selection" })
+
+-- Fold to a given depth: `<leader>z2` keeps 2 levels open and folds everything
+-- deeper, `<leader>z3` keeps 3, etc. `<leader>z0` folds all (like zM).
+-- 'foldlevel' is window-local, so the chosen level is remembered per buffer
+-- (vim.b.fold_level) and re-applied whenever that buffer is shown in a window.
+local default_fold_level = vim.go.foldlevel
+
+for level = 0, 9 do
+  map("n", "<leader>z" .. level, function()
+    vim.b.fold_level = level
+    vim.wo.foldenable = true
+    vim.api.nvim_set_option_value("foldlevel", level, { win = 0 })
+    vim.cmd("normal! zx")
+  end, { desc = "Fold to level " .. level })
+end
+
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  group = vim.api.nvim_create_augroup("fold_level_per_buffer", { clear = true }),
+  callback = function(ev)
+    local level = vim.b[ev.buf].fold_level or default_fold_level
+    vim.api.nvim_set_option_value("foldlevel", level, { win = 0 })
+  end,
+})
