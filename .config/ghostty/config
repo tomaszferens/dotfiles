@@ -3,14 +3,42 @@
 
 # ── Font ─────────────────────────────────────────────────────────────
 # JetBrains Mono Regular at 14 (Ghostty bundles it with a Nerd Font symbols
-# fallback, so no font-family). Cell geometry copies WezTerm: cell_width 0.9
-# and line_height 1.2. Ghostty 1.3 subpixel-aligns glyphs when the cell is
-# narrower than the advance, so the -10% does not clip.
-# Knob if strokes look lighter than WezTerm's FreeType output:
-#   font-thicken = true  (then font-thicken-strength 0-255, default 255)
+# fallback, so no font-family). Line height copies WezTerm's 1.2.
+#
+# No adjust-cell-width. Ghostty 1.3 already rounds the cell to the nearest
+# pixel of the glyph advance (1.2 used ceil), and on macOS it now keeps the
+# fractional centering offset as a subpixel shift whenever the cell is
+# narrower than the advance. At size 14 a -10% cell put the LG ULTRAWIDE
+# (1x, 3440x1440) at 7px for an 8.4px advance, so every stem sat 0.7px
+# between physical pixels and smeared; the 2x Retina panel hid the same
+# shift. See ghostty-org/ghostty discussions 11496 and 11338, issue 4504.
+# Any negative percentage flips the rounding at some font size, so leave it
+# out rather than tune it. If the Retina panel must be tighter, -6% is the
+# largest value that still leaves the LG at 8px, but only at size 14.
+#
+# Thickening is global; Ghostty has no per-display switch (asked for in
+# issue 4504, not implemented as of 1.3.1). It turns on CoreText font
+# smoothing; strength scales the stroke dilation, never the opacity.
+# Measured 2026-09-18 by replaying Ghostty's exact rasterizer on the
+# bundled JetBrains Mono at 14pt ('|' stem width and peak pixel coverage,
+# 1x LG ULTRAWIDE vs 2x MacBook). The dilation is proportional in points,
+# the strength is quantized into five steps, and the 2x panel caps early:
+#   off      1x 1.26pt stem, 64% peak (soft, grey) | 2x 1.26pt
+#   0-99     1x 1.42pt 71%                          | 2x 1.42pt
+#   100-164  1x 1.49pt 75%                          | 2x 1.49pt
+#   165-207  1x 1.56pt 78%                          | 2x 1.56pt
+#   208-240  1x 1.64pt 82%                          | 2x 1.56pt (capped)
+#   241-255  1x 1.71pt 85%                          | 2x 1.56pt (capped)
+# 255 is the only value that narrows the gap between the panels: the LG
+# gets its most solid strokes and the MacBook pays exactly what 165 costs
+# (roughly JetBrains Mono Medium). 100-240 are identical to a neighbour or
+# dominated. The one real alternative is 63 (any of 0-99): lightest touch
+# on the MacBook, LG only a step above off.
+# Iterate with cmd+shift+, (reload_config rebuilds the font atlas).
 font-size                      = 14
-adjust-cell-width              = -10%
 adjust-cell-height             = 20%
+font-thicken                   = true
+font-thicken-strength          = 255
 font-feature                   = -calt
 font-feature                   = -clig
 font-feature                   = -liga

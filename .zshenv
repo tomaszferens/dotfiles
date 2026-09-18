@@ -38,6 +38,7 @@ CONFIG_TRACKED=(
   ~/.config/ghostty/themes
   ~/.config/herdr/config.toml
   ~/.config/herdr/nvim-ai-bridge.sh
+  ~/.config/herdr/layout.sh
   ~/.config/nvim
   ~/.config/wezterm
   ~/.config/mcphub

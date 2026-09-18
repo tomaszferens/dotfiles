@@ -29,6 +29,7 @@ credentials*
 /.config/herdr/*
 !/.config/herdr/config.toml
 !/.config/herdr/nvim-ai-bridge.sh
+!/.config/herdr/layout.sh
 
 .pi/agent/sessions/
 .pi/agent/.extmgr-cache/

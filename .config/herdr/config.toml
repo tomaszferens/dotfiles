@@ -46,3 +46,19 @@ switch_workspace = "prefix+alt+1..9"
 key = "alt+a"
 type = "shell"
 command = "/Users/tomaszferens/.config/herdr/nvim-ai-bridge.sh"
+
+# prefix+shift+s / prefix+shift+l: rebuild the focused workspace's tabs from a
+# profile in layout.sh (sztama: zsh, mobile, dev, neovim, LLM; generic: zsh,
+# nvim, llm). Every existing tab in that workspace is closed first, which kills
+# whatever runs in it, so the result is always exactly the profile's tabs.
+# Prefix chords on purpose: it is destructive, and WezTerm/Ghostty never see
+# the second key of a prefix chord, so no passthrough is needed.
+[[keys.command]]
+key = "prefix+shift+s"
+type = "shell"
+command = "/Users/tomaszferens/.config/herdr/layout.sh sztama"
+
+[[keys.command]]
+key = "prefix+shift+l"
+type = "shell"
+command = "/Users/tomaszferens/.config/herdr/layout.sh generic"
