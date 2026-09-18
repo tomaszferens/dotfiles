@@ -31,6 +31,9 @@ export PATH="$HOME/bin:$PATH"
 alias config='git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 
 CONFIG_TRACKED=(
+  ~/.claude/settings.json
+  ~/.tmux.conf
+  ~/.config/tmux
   ~/.config/ghostty/config
   ~/.config/ghostty/themes
   ~/.config/herdr/config.toml
