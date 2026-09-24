@@ -46,7 +46,7 @@ fail() {
 }
 
 case $profile in
-  sztama)
+  mobile)
     tabs=(
       "zsh|"
       "mobile|"
@@ -63,7 +63,7 @@ case $profile in
     )
     ;;
   *)
-    fail "unknown profile '${profile}' (expected: sztama, generic)"
+    fail "unknown profile '${profile}' (expected: mobile, generic)"
     ;;
 esac
 
