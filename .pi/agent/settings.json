@@ -2,7 +2,7 @@
   "lastChangelogVersion": "0.87.1",
   "defaultThinkingLevel": "max",
   "steeringMode": "all",
-  "theme": "dark",
+  "theme": "light",
   "editorPaddingX": 1,
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6-astra",
