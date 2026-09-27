@@ -44,9 +44,12 @@ font-feature                   = -clig
 font-feature                   = -liga
 window-inherit-font-size       = true
 
-# ── Theme: Tokyo Night ──────────────────────────────────────────────
+# ── Theme ────────────────────────────────────────────────────────────
+# Tokyo Night by default. The theme picked with ~/.config/theme (herdr
+# alt+shift+o / alt+shift+c) lands in ../theme/ghostty.conf, which is not in
+# the dotfiles and overrides this; apply.sh reloads Ghostty.
 theme                          = TokyoNight
-background                     = 1a1b26
+config-file                    = ?../theme/ghostty.conf
 
 # ── Cursor ───────────────────────────────────────────────────────────
 adjust-cursor-thickness        = 2

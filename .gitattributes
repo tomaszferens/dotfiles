@@ -1,0 +1,4 @@
+# Selected theme is applied by ~/.config/theme/apply.sh through the
+# theme-toggle block in ~/.config/herdr/config.toml, which is committed as
+# tokyonight (git-clean-herdr.sh).
+/.config/herdr/config.toml filter=theme-block

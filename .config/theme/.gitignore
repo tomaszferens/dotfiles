@@ -1,0 +1,9 @@
+# Per-machine state written by apply.sh / preview.sh; only the themes and
+# scripts are dotfiles.
+/current
+/last-light
+/last-dark
+/nvim
+/ghostty.conf
+/.pending
+/.lock

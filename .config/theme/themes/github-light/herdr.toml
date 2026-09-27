@@ -1,0 +1,28 @@
+[theme]
+name = "one-light"
+auto_switch = false
+
+# GitHub Light Default (Primer) colors on top of one-light, to match Ghostty's
+# "GitHub Light Default" and Neovim's github_light_default.
+[theme.custom]
+accent = "#0969da"
+surface0 = "#eff2f5"
+surface1 = "#d1d9e0"
+surface_dim = "#ddf4ff"
+overlay0 = "#59636e"
+overlay1 = "#59636e"
+text = "#1f2328"
+subtext0 = "#393f46"
+mauve = "#8250df"
+green = "#1a7f37"
+yellow = "#9a6700"
+red = "#d1242f"
+blue = "#0969da"
+teal = "#1b7c83"
+peach = "#bc4c00"
+
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", "workspace", { token = "tab", fg = "#393f46" }],
+  [{ token = "agent", fg = "#393f46" }],
+]

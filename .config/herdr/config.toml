@@ -1,26 +1,6 @@
 onboarding = false
-[theme]
-name = "tokyo-night"
-
-# surface_dim paints the active space/agent row background in the sidebar;
-# stock tokyo-night makes it near-invisible. Tokyo Night selection blue.
-# text is the active/emphasized foreground — full white for contrast on it.
-auto_switch = false
-[theme.custom]
-surface_dim = "#283457"
-text = "#ffffff"
-
 [ui]
 agent_panel_sort = "spaces"
-
-# Default agent rows use overlay0 (#565f89) for the tab and agent-name text,
-# which is unreadable on the surface_dim active-row bar. Same layout as the
-# default, with an explicit readable foreground on those tokens.
-[ui.sidebar.agents]
-rows = [
-  ["state_icon", "workspace", { token = "tab", fg = "#a9b1d6" }],
-  [{ token = "agent", fg = "#a9b1d6" }],
-]
 
 # Direct alt chords (no prefix) — herdr grabs them before panes see them.
 # Neovim maps already use alt+h/n/o/s/t/b/f/,/. so those are avoided; j/k, u/i,
@@ -62,3 +42,43 @@ command = "$HOME/.config/herdr/layout.sh mobile"
 key = "prefix+shift+l"
 type = "shell"
 command = "$HOME/.config/herdr/layout.sh generic"
+
+# alt+shift+c: flip between the last light and last dark theme in Ghostty,
+# herdr, every running Neovim and Claude Code (~/.config/theme/toggle.sh).
+# alt+shift+o: fzf theme picker with live preview (~/.config/theme/pick.sh).
+[[keys.command]]
+key = "alt+shift+c"
+type = "shell"
+command = "$HOME/.config/theme/toggle.sh"
+
+[[keys.command]]
+key = "alt+shift+o"
+type = "popup"
+command = "$HOME/.config/theme/pick.sh"
+width = 50
+height = 20
+
+# Theme ([theme], [theme.custom], [ui.sidebar.agents]) is managed by
+# ~/.config/theme/apply.sh: it replaces everything between these markers
+# with ~/.config/theme/themes/<name>/herdr.toml. Edit those files, not this block.
+# >>> theme-toggle
+[theme]
+name = "tokyo-night"
+auto_switch = false
+
+# surface_dim paints the active space/agent row background in the sidebar;
+# stock tokyo-night makes it near-invisible. Tokyo Night selection blue.
+# text is the active/emphasized foreground — full white for contrast on it.
+[theme.custom]
+surface_dim = "#283457"
+text = "#ffffff"
+
+# Default agent rows use overlay0 (#565f89) for the tab and agent-name text,
+# which is unreadable on the surface_dim active-row bar. Same layout as the
+# default, with an explicit readable foreground on those tokens.
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", "workspace", { token = "tab", fg = "#a9b1d6" }],
+  [{ token = "agent", fg = "#a9b1d6" }],
+]
+# <<< theme-toggle

@@ -39,6 +39,7 @@ CONFIG_TRACKED=(
   ~/.config/herdr/config.toml
   ~/.config/herdr/nvim-ai-bridge.sh
   ~/.config/herdr/layout.sh
+  ~/.config/theme
   ~/.config/nvim
   ~/.config/wezterm
   ~/.config/mcphub
@@ -53,8 +54,10 @@ CONFIG_TRACKED=(
 )
 
 configpush() {
+  # Commit herdr's theme block as the default theme (see ~/.gitattributes).
+  config config filter.theme-block.clean 'sh "$HOME/.config/theme/git-clean-herdr.sh"' && \
   config add "${CONFIG_TRACKED[@]}" && \
-  config add ~/.zshenv ~/.gitignore && \
+  config add ~/.zshenv ~/.gitignore ~/.gitattributes && \
   config commit -m "${1:-dotfiles update}" && \
   config push origin HEAD
 }
