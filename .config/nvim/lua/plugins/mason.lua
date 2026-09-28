@@ -12,7 +12,6 @@ return {
       "oxlint",
       "ruff",
       "shfmt",
-      "copilot-language-server",
     },
   },
 }
