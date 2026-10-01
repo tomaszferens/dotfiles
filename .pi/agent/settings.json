@@ -1,6 +1,9 @@
 {
-  "lastChangelogVersion": "0.87.1",
+  "lastChangelogVersion": "0.99.2",
   "defaultThinkingLevel": "max",
+  "defaultTools": [
+    "+codemode"
+  ],
   "steeringMode": "all",
   "theme": "light",
   "editorPaddingX": 1,
@@ -11,8 +14,7 @@
     "npm:pi-web-access",
     "npm:pi-rewind",
     "npm:@ff-labs/pi-fff",
-    "npm:@plannotator/pi-extension",
-    "npm:pi-mcp-adapter"
+    "npm:@plannotator/pi-extension"
   ],
   "hideThinkingBlock": false,
   "powerline": "default",
